@@ -4,7 +4,7 @@
 
 # 🚆 AABPS — AI-Powered Automatic Block Planning System
 
-### Smart India Hackathon 2025 · Problem Statement #26027
+### Smart India Hackathon 2026 · Problem Statement #26027
 ### Ministry of Railways, Government of India
 
 ---
