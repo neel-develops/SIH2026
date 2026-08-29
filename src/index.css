@@ -1,0 +1,353 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ============================================================
+   AABPS — Warm Industrial Design System
+   Palette: Cream · Sage · Burnt Amber
+   ============================================================ */
+:root {
+  /* Canvas */
+  --bg-base:     #FAF8F5;          /* Warm cream page background */
+  --bg-surface:  #FFFFFF;          /* Card / panel surfaces */
+  --bg-raised:   #F3F0EA;          /* Slightly deeper surface (sidebar, sub-panels) */
+  --bg-hover:    #EDE8DF;          /* Hover state */
+
+  /* Borders */
+  --border-soft: #E5E0D5;          /* Default hairline */
+  --border-mid:  #D4C9B8;          /* Slightly stronger border */
+
+  /* Typography */
+  --text-primary:   #2C1A0E;       /* Warm near-black — headings */
+  --text-secondary: #6B5A4E;       /* Muted warm brown — body */
+  --text-muted:     #9C8B80;       /* Labels, placeholders */
+  --text-on-dark:   #FAF8F5;       /* Text on dark CTA buttons */
+
+  /* Brand Accent — Burnt Amber / Terracotta */
+  --amber-900:  #7C3D12;
+  --amber-700:  #B45309;
+  --amber-500:  #D97706;
+  --amber-300:  #FCD34D;
+  --amber-100:  #FEF3C7;
+
+  /* Dept Colors — keep semantic but warm them */
+  --rail-eng:       #1D4ED8;       /* Engineering Blue (slightly warmer) */
+  --rail-snt:       #059669;       /* S&T Green */
+  --rail-td:        #C2410C;       /* TD Terracotta Orange */
+  --rail-combined:  #B45309;       /* Combined block — Amber */
+  --rail-critical:  #B91C1C;       /* Critical Red */
+  --rail-signal:    #D97706;       /* Caution Amber */
+
+  /* Sage accents */
+  --sage-bg:    #EEF4EE;
+  --sage-text:  #2D6A2D;
+  --sage-border: #A3C4A3;
+
+  /* CTA dark — olive/forest green */
+  --cta-dark:   #3D4A2E;
+  --cta-dark-hover: #2F3A22;
+
+  /* Glassmorphism */
+  --glass-bg:   rgba(255,255,255,0.72);
+  --glass-border: rgba(255,255,255,0.5);
+  --glass-shadow: 0 4px 24px rgba(124,61,18,0.08), 0 1px 4px rgba(0,0,0,0.04);
+
+  /* Grid pattern spacing */
+  --grid-size: 28px;
+}
+
+/* ============================================================
+   BASE RESET & TYPOGRAPHY
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 500;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Subtle warm grid backdrop */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(180,83,9,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(180,83,9,0.04) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+}
+
+/* ============================================================
+   CUSTOM SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-raised); }
+::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--amber-500); }
+
+/* ============================================================
+   TYPOGRAPHY HELPERS
+   ============================================================ */
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   GLASS CARD UTILITY
+   ============================================================ */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: var(--glass-shadow);
+}
+
+.warm-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(124,61,18,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.warm-card:hover {
+  box-shadow: 0 6px 24px rgba(124,61,18,0.12), 0 2px 6px rgba(0,0,0,0.06);
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   INPUT / FORM ELEMENTS
+   ============================================================ */
+.warm-input {
+  background: var(--bg-base);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  color: var(--text-primary);
+  padding: 10px 14px;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+}
+.warm-input:focus {
+  border-color: var(--amber-500);
+  box-shadow: 0 0 0 3px rgba(217,119,6,0.12);
+}
+.warm-input::placeholder { color: var(--text-muted); }
+
+/* ============================================================
+   BUTTON VARIANTS
+   ============================================================ */
+.btn-primary {
+  background: var(--cta-dark);
+  color: var(--text-on-dark);
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-primary:hover { background: var(--cta-dark-hover); transform: translateY(-1px); }
+
+.btn-amber {
+  background: var(--amber-700);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-amber:hover { background: var(--amber-900); transform: translateY(-1px); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 9px 18px;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-ghost:hover {
+  background: var(--bg-hover);
+  border-color: var(--amber-500);
+  color: var(--amber-700);
+}
+
+/* ============================================================
+   BADGE / STATUS CHIPS
+   ============================================================ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.chip-amber   { background: var(--amber-100); color: var(--amber-700); border: 1px solid #FCD34D; }
+.chip-sage    { background: var(--sage-bg); color: var(--sage-text); border: 1px solid var(--sage-border); }
+.chip-red     { background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; }
+.chip-blue    { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+.chip-muted   { background: var(--bg-raised); color: var(--text-muted); border: 1px solid var(--border-soft); }
+
+/* ============================================================
+   NAV / SIDEBAR
+   ============================================================ */
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  text-align: left;
+  width: 100%;
+  background: transparent;
+}
+.sidebar-nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.sidebar-nav-item.active {
+  background: var(--sage-bg);
+  color: var(--sage-text);
+  border-color: var(--sage-border);
+}
+
+/* ============================================================
+   COMBINED BLOCK HATCH (warm amber diagonal)
+   ============================================================ */
+.bg-combined-hatch {
+  background: repeating-linear-gradient(
+    45deg,
+    #D97706,
+    #D97706 10px,
+    #B45309 10px,
+    #B45309 20px
+  );
+}
+
+.bg-conflict-hatch {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(185, 28, 28, 0.2),
+    rgba(185, 28, 28, 0.2) 10px,
+    rgba(185, 28, 28, 0.5) 10px,
+    rgba(185, 28, 28, 0.5) 20px
+  );
+}
+
+/* ============================================================
+   TABLE STYLES
+   ============================================================ */
+.warm-table th {
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.warm-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.warm-table tr:hover td { background: var(--bg-raised); }
+
+/* ============================================================
+   LEAFLET MAP — warm overlay
+   ============================================================ */
+.leaflet-container {
+  border-radius: 16px;
+  background: #F0EBE0 !important;
+}
+.leaflet-tile { filter: sepia(0.15) saturate(0.85) brightness(1.05); }
+.leaflet-popup-content-wrapper {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--glass-shadow);
+  color: var(--text-primary);
+}
+.leaflet-popup-tip { background: var(--bg-surface); }
+
+/* ============================================================
+   RECHARTS — warm axis and tooltip
+   ============================================================ */
+.recharts-cartesian-axis-tick text { fill: var(--text-muted) !important; }
+.recharts-cartesian-grid line { stroke: var(--border-soft) !important; }
+
+/* ============================================================
+   SECTION / PAGE HEADER
+   ============================================================ */
+.page-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--amber-900);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.page-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ============================================================
+   MISC ANIMATIONS
+   ============================================================ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.anim-fade-up { animation: fadeUp 0.35s ease both; }
+
+@keyframes pulse-amber {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0); }
+  50%       { box-shadow: 0 0 0 6px rgba(217,119,6,0.2); }
+}
+.pulse-amber { animation: pulse-amber 2s ease-in-out infinite; }
