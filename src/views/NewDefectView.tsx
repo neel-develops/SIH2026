@@ -1,57 +1,63 @@
 import React, { useState } from 'react';
 import { useStore } from '../lib/store/useStore';
-import { BLOCK_SECTIONS } from '../lib/mocks/seedData';
-import { Department, Criticality } from '../types';
-import { PlusCircle, QrCode, MapPin, CheckCircle2, WifiOff } from 'lucide-react';
+import { PlusCircle, QrCode, MapPin, CheckCircle2 } from 'lucide-react';
+
+const BLOCK_SECTIONS = [
+  'CSTM-BY', 'BY-DR', 'DR-KYN', 'KYN-KSRA', 'KSRA-LNL', 'LNL-PUNE',
+];
 
 export const NewDefectView: React.FC = () => {
-  const { currentUser, networkTier, addDefect, setCurrentRoute } = useStore();
+  const { currentUser, createDefect, setCurrentRoute } = useStore();
 
-  const [dept, setDept] = useState<Department>(currentUser.department || 'ENG');
-  const [assetType, setAssetType] = useState('Rail fracture / Weld failure');
+  const [dept, setDept] = useState(currentUser?.department || 'ENG');
+  const [defectType, setDefectType] = useState('Rail fracture / Weld failure');
+  const [assetType, setAssetType] = useState('');
   const [section, setSection] = useState('KYN-KSRA');
-  const [kmPost, setKmPost] = useState<number>(42.350);
+  const [kmFrom, setKmFrom] = useState<number>(42.350);
+  const [kmTo, setKmTo] = useState<number | ''>('');
   const [description, setDescription] = useState('');
-  const [criticality, setCriticality] = useState<Criticality>('HIGH');
-  const [duration, setDuration] = useState<number>(120);
+  const [criticality, setCriticality] = useState('HIGH');
+  const [durationHrs, setDurationHrs] = useState<number>(2);
   const [tsr, setTsr] = useState(false);
 
+  const [submitting, setSubmitting] = useState(false);
   const [submittedMsg, setSubmittedMsg] = useState<string | null>(null);
 
   const handleUseGps = () => {
-    setKmPost(+(42.350 + (Math.random() * 2 - 1)).toFixed(3));
+    setKmFrom(+(42.350 + (Math.random() * 2 - 1)).toFixed(3));
   };
 
   const handleQrScan = () => {
+    setDefectType('Point Machine Failure');
     setAssetType('Point Machine #14B');
-    setKmPost(54.120);
+    setKmFrom(54.120);
     setSection('KYN-KSRA');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addDefect({
-      source: dept === 'ENG' ? 'TMS' : dept === 'SNT' ? 'SMMS' : 'TDMS',
-      department: dept,
-      assetType,
-      description: description || `${assetType} logged via Mobile Field PWA at KM ${kmPost}`,
-      sectionId: 'CSTM-PUNE',
-      blockSection: section,
-      kmPost,
-      lat: 19.44,
-      lng: 73.31,
-      dueBy: new Date(Date.now() + 86400000).toISOString(),
-      estimatedDurationMin: duration,
-      criticality,
-      tsrImposed: tsr,
-      status: 'OPEN',
-      reportedBy: currentUser.name
-    });
+    setSubmitting(true);
 
-    if (networkTier === 'OFFLINE') {
-      setSubmittedMsg('Queued offline — will sync automatically when back online!');
-    } else {
+    try {
+      await createDefect({
+        section,
+        km_from: kmFrom,
+        km_to: kmTo !== '' ? kmTo : undefined,
+        defect_type: defectType,
+        asset_type: assetType || undefined,
+        description: description || `${defectType} logged via Mobile Field PWA at KM ${kmFrom}`,
+        criticality,
+        department: dept,
+        reported_by: currentUser?.name || undefined,
+        requires_tsr: tsr,
+        estimated_duration_hrs: durationHrs,
+      });
+
       setSubmittedMsg('Defect submitted successfully to Railway Database!');
+    } catch (err: any) {
+      setSubmittedMsg(`Error: ${err.message || 'Failed to submit defect'}`);
+    } finally {
+      setSubmitting(false);
     }
 
     setTimeout(() => {
@@ -64,11 +70,13 @@ export const NewDefectView: React.FC = () => {
     <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
       {submittedMsg && (
         <div style={{
-          background: 'var(--sage-bg)', border: '2px solid var(--sage-border)',
-          color: 'var(--sage-text)', padding: '14px 18px', borderRadius: 12,
+          background: submittedMsg.startsWith('Error') ? 'var(--bg-raised)' : 'var(--sage-bg)',
+          border: `2px solid ${submittedMsg.startsWith('Error') ? 'var(--rail-critical)' : 'var(--sage-border)'}`,
+          color: submittedMsg.startsWith('Error') ? 'var(--rail-critical)' : 'var(--sage-text)',
+          padding: '14px 18px', borderRadius: 12,
           fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 10,
         }}>
-          <CheckCircle2 size={18} color="var(--rail-snt)" />
+          <CheckCircle2 size={18} color={submittedMsg.startsWith('Error') ? 'var(--rail-critical)' : 'var(--rail-snt)'} />
           <span>{submittedMsg}</span>
         </div>
       )}
@@ -81,11 +89,6 @@ export const NewDefectView: React.FC = () => {
               Report Field Maintenance Defect
             </h2>
           </div>
-          {networkTier === 'OFFLINE' && (
-            <span className="chip" style={{ background: 'var(--rail-critical)', color: '#fff', fontSize: 10, border: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <WifiOff size={11} /> OFFLINE TRAY
-            </span>
-          )}
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -107,7 +110,7 @@ export const NewDefectView: React.FC = () => {
               </label>
               <select
                 value={dept}
-                onChange={(e) => setDept(e.target.value as Department)}
+                onChange={(e) => setDept(e.target.value)}
                 className="warm-input font-mono"
               >
                 <option value="ENG">ENG (Engineering)</option>
@@ -122,7 +125,7 @@ export const NewDefectView: React.FC = () => {
               </label>
               <select
                 value={criticality}
-                onChange={(e) => setCriticality(e.target.value as Criticality)}
+                onChange={(e) => setCriticality(e.target.value)}
                 className="warm-input font-mono"
               >
                 <option value="CRITICAL">CRITICAL (Emergency)</option>
@@ -135,14 +138,27 @@ export const NewDefectView: React.FC = () => {
 
           <div>
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
-              Asset Type
+              Defect Type
             </label>
             <input
               type="text"
               required
+              value={defectType}
+              onChange={(e) => setDefectType(e.target.value)}
+              className="warm-input font-mono"
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
+              Asset Type (Optional)
+            </label>
+            <input
+              type="text"
               value={assetType}
               onChange={(e) => setAssetType(e.target.value)}
               className="warm-input font-mono"
+              placeholder="e.g. Point Machine, OHE Dropper"
             />
           </div>
 
@@ -164,7 +180,7 @@ export const NewDefectView: React.FC = () => {
 
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>KM Post</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>KM From</label>
                 <button
                   type="button"
                   onClick={handleUseGps}
@@ -177,8 +193,8 @@ export const NewDefectView: React.FC = () => {
                 type="number"
                 step="0.001"
                 required
-                value={kmPost}
-                onChange={(e) => setKmPost(parseFloat(e.target.value))}
+                value={kmFrom}
+                onChange={(e) => setKmFrom(parseFloat(e.target.value))}
                 className="warm-input font-mono"
               />
             </div>
@@ -186,13 +202,14 @@ export const NewDefectView: React.FC = () => {
 
           <div>
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
-              Estimated Maintenance Duration (Mins)
+              Estimated Maintenance Duration (Hours)
             </label>
             <input
               type="number"
-              step="30"
-              value={duration}
-              onChange={(e) => setDuration(parseInt(e.target.value))}
+              step="0.5"
+              min="0.5"
+              value={durationHrs}
+              onChange={(e) => setDurationHrs(parseFloat(e.target.value))}
               className="warm-input font-mono"
             />
           </div>
@@ -212,10 +229,11 @@ export const NewDefectView: React.FC = () => {
 
           <button
             type="submit"
+            disabled={submitting}
             className="btn-amber"
-            style={{ width: '100%', justifyContent: 'center', fontSize: 14, padding: '12px 0' }}
+            style={{ width: '100%', justifyContent: 'center', fontSize: 14, padding: '12px 0', opacity: submitting ? 0.6 : 1 }}
           >
-            {networkTier === 'OFFLINE' ? 'Queue Defect Submission Offline' : 'Submit Defect to AABPS Database'}
+            {submitting ? 'Submitting...' : 'Submit Defect to AABPS Database'}
           </button>
         </form>
       </div>

@@ -9,33 +9,58 @@ export const PlanDetailView: React.FC = () => {
   const [approvalNote, setApprovalNote] = useState('');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const canApprove = currentUser.role === 'DIVISIONAL_BLOCK_PLANNER' || currentUser.role === 'SENIOR_OFFICER';
+  if (!plan) {
+    return (
+      <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
+        <p>No plan selected. Generate a plan first.</p>
+        <button onClick={() => setCurrentRoute('/block-plans/generate')} className="btn-amber" style={{ marginTop: 12 }}>
+          Generate Plan
+        </button>
+      </div>
+    );
+  }
 
-  const handleApprove = () => {
-    approvePlan(plan.id, currentUser.role, currentUser.name, approvalNote || 'Plan approved after multi-department review.');
-    setToastMsg('Plan approved — synced to COA (Control Office Application) successfully!');
-    setTimeout(() => setToastMsg(null), 4000);
+  const canApprove = currentUser?.role === 'DIVISIONAL_BLOCK_PLANNER' || currentUser?.role === 'SENIOR_OFFICER';
+
+  const handleApprove = async () => {
+    try {
+      await approvePlan(plan.id, 'APPROVE', approvalNote || 'Plan approved after multi-department review.');
+      setToastMsg('Plan approved — synced to COA (Control Office Application) successfully!');
+      setTimeout(() => setToastMsg(null), 4000);
+    } catch (e: any) {
+      setToastMsg(`Error: ${e.message}`);
+      setTimeout(() => setToastMsg(null), 4000);
+    }
   };
 
-  const handleReject = () => {
-    setToastMsg('Plan rejected — returned to Divisional Planner for re-optimization.');
-    setTimeout(() => setToastMsg(null), 4000);
+  const handleReject = async () => {
+    try {
+      await approvePlan(plan.id, 'REJECT', approvalNote || 'Plan rejected — needs re-optimization.');
+      setToastMsg('Plan rejected — returned to Divisional Planner for re-optimization.');
+      setTimeout(() => setToastMsg(null), 4000);
+    } catch (e: any) {
+      setToastMsg(`Error: ${e.message}`);
+      setTimeout(() => setToastMsg(null), 4000);
+    }
   };
+
+  const deptColor = (d: string) => d === 'ENG' ? 'var(--rail-eng)' : d === 'S&T' ? 'var(--rail-snt)' : 'var(--rail-td)';
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Toast Banner */}
       {toastMsg && (
         <div style={{
-          background: 'var(--sage-bg)', border: '2px solid var(--sage-border)',
-          color: 'var(--sage-text)', padding: '12px 18px', borderRadius: 12,
+          background: toastMsg.startsWith('Error') ? '#FEF2F2' : 'var(--sage-bg)',
+          border: `2px solid ${toastMsg.startsWith('Error') ? '#FECACA' : 'var(--sage-border)'}`,
+          color: toastMsg.startsWith('Error') ? '#DC2626' : 'var(--sage-text)',
+          padding: '12px 18px', borderRadius: 12,
           fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <CheckCircle2 size={18} color="var(--rail-snt)" />
+            <CheckCircle2 size={18} color={toastMsg.startsWith('Error') ? '#DC2626' : 'var(--rail-snt)'} />
             <span>{toastMsg}</span>
           </div>
-          <button onClick={() => setToastMsg(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, color: 'var(--sage-text)' }}>✕</button>
+          <button onClick={() => setToastMsg(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, color: 'inherit' }}>✕</button>
         </div>
       )}
 
@@ -56,19 +81,19 @@ export const PlanDetailView: React.FC = () => {
 
         <div style={{ paddingBottom: 12, borderBottom: '1px solid var(--border-soft)' }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px' }}>
-            Block Plan Detail & Approval Workflow — {plan.id}
+            Block Plan Detail & Approval Workflow — {plan.name}
           </h2>
           <p className="font-mono" style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
-            Section: {plan.sectionId} · Generated: {new Date(plan.generatedAt).toLocaleString()}
+            {plan.plan_type} · {plan.division} · Generated: {new Date(plan.created_at).toLocaleString()}
+            {plan.solver_time_ms != null && ` · Solve: ${(plan.solver_time_ms / 1000).toFixed(1)}s`}
           </p>
         </div>
 
-        {/* Tabs */}
         <div style={{ display: 'flex', gap: 10 }}>
           {[
             { id: 'APPROVALS', label: 'Multi-Tier Approval Chain' },
-            { id: 'BLOCKS',    label: `Scheduled Blocks (${plan.blocks.length})` },
-            { id: 'AUDIT',     label: 'Audit Trail & Overrides' },
+            { id: 'BLOCKS', label: `Scheduled Blocks (${plan.blocks.length})` },
+            { id: 'AUDIT', label: 'Audit Trail & Overrides' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -96,53 +121,52 @@ export const PlanDetailView: React.FC = () => {
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {/* Step 1: SSE Review */}
-              <div style={{ background: 'var(--bg-raised)', padding: '14px 16px', borderRadius: 12, border: '1px solid var(--sage-border)', borderLeft: '4px solid var(--rail-snt)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--sage-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <UserCheck size={18} color="var(--rail-snt)" />
+              {/* Real approvals from API */}
+              {plan.approvals.length > 0 ? plan.approvals.map((appr) => (
+                <div key={appr.id} style={{
+                  background: 'var(--bg-raised)', padding: '14px 16px', borderRadius: 12,
+                  border: `1px solid ${appr.action === 'APPROVE' ? 'var(--sage-border)' : '#FECACA'}`,
+                  borderLeft: `4px solid ${appr.action === 'APPROVE' ? 'var(--rail-snt)' : '#DC2626'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: appr.action === 'APPROVE' ? 'var(--sage-bg)' : '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {appr.action === 'APPROVE' ? <UserCheck size={18} color="var(--rail-snt)" /> : <XCircle size={18} color="#DC2626" />}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>{appr.user_name} ({appr.role})</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                        {appr.comment || 'No comment'} · {new Date(appr.created_at).toLocaleString()}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>Stage 1: Senior Section Engineer (SSE) Technical Review</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Vikram Singh (SSE Engineering, Kalyan)</div>
-                  </div>
+                  <span className={`chip ${appr.action === 'APPROVE' ? 'chip-sage' : 'chip-red'}`}>{appr.action}</span>
                 </div>
-                <span className="chip chip-sage">APPROVED</span>
-              </div>
+              )) : (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                  No approvals yet. Waiting for officer review.
+                </div>
+              )}
 
-              {/* Step 2: Divisional Planner */}
-              <div style={{ background: 'var(--bg-raised)', padding: '14px 16px', borderRadius: 12, border: '1px solid var(--border-soft)', borderLeft: '4px solid var(--amber-700)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--amber-100)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ShieldCheck size={18} color="var(--amber-700)" />
+              {/* Pending stages */}
+              {plan.status !== 'APPROVED' && (
+                <div style={{
+                  background: 'var(--bg-raised)', padding: '14px 16px', borderRadius: 12,
+                  border: '1px solid var(--border-soft)', borderLeft: '4px solid var(--amber-700)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--amber-100)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ShieldCheck size={18} color="var(--amber-700)" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>Next: Officer Approval Required</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Divisional Block Planner or Senior Officer must review</div>
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>Stage 2: Divisional Block Planning Officer Approval</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Rajesh Sharma (Divisional Block Planning Officer)</div>
-                  </div>
+                  <span className="chip chip-amber">PENDING</span>
                 </div>
-                {plan.approvals.some((a) => a.role === 'DIVISIONAL_BLOCK_PLANNER')
-                  ? <span className="chip chip-sage">APPROVED</span>
-                  : <span className="chip chip-amber">PENDING</span>
-                }
-              </div>
-
-              {/* Step 3: DRM Senior Officer */}
-              <div style={{ background: 'var(--bg-raised)', padding: '14px 16px', borderRadius: 12, border: '1px solid var(--border-soft)', borderLeft: '4px solid var(--rail-eng)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(29,78,216,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <UserCheck size={18} color="var(--rail-eng)" />
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>Stage 3: Divisional Railway Manager (DRM) Final Approval</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Anil Deshmukh (DRM, Mumbai Division)</div>
-                  </div>
-                </div>
-                {plan.status === 'APPROVED'
-                  ? <span className="chip chip-sage">FINAL APPROVED</span>
-                  : <span className="chip chip-amber">AWAITING DRM SIGN-OFF</span>
-                }
-              </div>
+              )}
             </div>
           </div>
 
@@ -151,7 +175,7 @@ export const PlanDetailView: React.FC = () => {
             <div className="warm-card" style={{ padding: '20px 24px', borderLeft: '4px solid var(--amber-700)' }}>
               <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--amber-700)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <ShieldCheck size={16} />
-                <span>Officer Approval Decision — Signed in as {currentUser.name} ({currentUser.designation})</span>
+                <span>Officer Approval Decision — Signed in as {currentUser?.name} ({currentUser?.role})</span>
               </div>
 
               {canApprove ? (
@@ -177,7 +201,7 @@ export const PlanDetailView: React.FC = () => {
                 </div>
               ) : (
                 <div style={{ background: 'var(--amber-100)', padding: '12px 14px', borderRadius: 10, border: '1px solid var(--amber-300)', fontSize: 12, color: 'var(--amber-900)' }}>
-                  Your current persona ({currentUser.role}) has read-only review rights. Switch persona to <strong>Rajesh Sharma (Planner)</strong> or <strong>Anil Deshmukh (DRM)</strong> in top-right switcher to approve.
+                  Your current role ({currentUser?.role}) has read-only review rights. Use the persona switcher in the top bar to switch to a Divisional Planner or Senior Officer role to approve.
                 </div>
               )}
             </div>
@@ -191,24 +215,47 @@ export const PlanDetailView: React.FC = () => {
           <table className="warm-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                {['BLOCK ID', 'TYPE', 'SECTION', 'DEPARTMENTS', 'CONFIDENCE', 'UTILISATION'].map(h => (
-                  <th key={h}>{h}</th>
+                {['BLOCK ID', 'TYPE', 'SECTION', 'DEPT', 'DEFECTS', 'DURATION', 'CONFIDENCE', 'STATUS'].map(h => (
+                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', background: 'var(--bg-raised)', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--border-soft)' }}>
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {plan.blocks.map((blk) => (
-                <tr key={blk.id}>
-                  <td className="font-mono" style={{ fontWeight: 700, color: 'var(--amber-700)' }}>{blk.id}</td>
-                  <td>
-                    <span className={`chip ${blk.blockType === 'COMBINED' ? 'chip-amber' : 'chip-blue'}`}>
-                      {blk.blockType}
+                <tr key={blk.id} style={{ borderBottom: '1px solid var(--border-soft)' }}>
+                  <td style={{ padding: '12px 14px' }}>
+                    <span className="font-mono" style={{ fontWeight: 700, color: 'var(--amber-700)', fontSize: 12 }}>{blk.id}</span>
+                  </td>
+                  <td style={{ padding: '12px 14px' }}>
+                    <span className={`chip ${blk.is_combined ? 'chip-amber' : 'chip-muted'}`} style={{ fontSize: 10 }}>
+                      {blk.is_combined ? 'COMBINED' : blk.block_type}
                     </span>
                   </td>
-                  <td className="font-mono">{blk.blockSection}</td>
-                  <td className="font-mono">{blk.departments.join(', ')}</td>
-                  <td className="font-mono">{(blk.aiConfidence * 100).toFixed(0)}%</td>
-                  <td className="font-mono" style={{ fontWeight: 700, color: 'var(--rail-snt)' }}>{blk.utilisationPct}%</td>
+                  <td className="font-mono" style={{ padding: '12px 14px', fontSize: 12 }}>{blk.section}</td>
+                  <td style={{ padding: '12px 14px' }}>
+                    <span className="chip" style={{ fontSize: 10, background: deptColor(blk.department), color: '#fff', border: 'none' }}>
+                      {blk.department}
+                    </span>
+                    {blk.is_combined && blk.combined_departments && (
+                      <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 6 }}>
+                        +{blk.combined_departments.filter(d => d !== blk.department).join(',')}
+                      </span>
+                    )}
+                  </td>
+                  <td className="font-mono" style={{ padding: '12px 14px', fontSize: 12 }}>{blk.defect_ids.length}</td>
+                  <td className="font-mono" style={{ padding: '12px 14px', fontSize: 12 }}>{blk.duration_hrs}h</td>
+                  <td style={{ padding: '12px 14px' }}>
+                    <span className="font-mono" style={{ fontWeight: 700, color: 'var(--rail-snt)', fontSize: 12 }}>
+                      {(blk.ai_confidence * 100).toFixed(0)}%
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px 14px' }}>
+                    <span className={`chip ${blk.status === 'COMPLETED' ? 'chip-sage' : blk.status === 'IN_PROGRESS' ? 'chip-amber' : 'chip-muted'}`} style={{ fontSize: 10 }}>
+                      {blk.status}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -222,15 +269,36 @@ export const PlanDetailView: React.FC = () => {
           <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid var(--border-soft)' }}>
             Plan Audit & Override Logs
           </h3>
-          {plan.blocks.filter(b => b.manuallyOverridden).map((blk) => (
+
+          {/* Overridden blocks */}
+          {plan.blocks.filter(b => b.override_reason).map((blk) => (
             <div key={blk.id} style={{ background: 'var(--bg-raised)', padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border-soft)', marginBottom: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span className="font-mono" style={{ fontWeight: 700, color: 'var(--amber-700)', fontSize: 12 }}>OVERRIDE LOG — Block {blk.id}</span>
-                <span className="font-mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>Audit Entry #8491</span>
+                <span className="font-mono" style={{ fontWeight: 700, color: 'var(--amber-700)', fontSize: 12 }}>OVERRIDE — Block {blk.id}</span>
+                <span className="font-mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>By: {blk.overridden_by || 'Unknown'}</span>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--text-primary)', margin: 0 }}>{blk.overrideReason}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-primary)', margin: 0 }}>{blk.override_reason}</p>
             </div>
           ))}
+
+          {/* Approval logs */}
+          {plan.approvals.map((appr) => (
+            <div key={appr.id} style={{ background: 'var(--bg-raised)', padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border-soft)', marginBottom: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span className="font-mono" style={{ fontWeight: 700, color: 'var(--rail-eng)', fontSize: 12 }}>
+                  {appr.action} — {appr.user_name} ({appr.role})
+                </span>
+                <span className="font-mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(appr.created_at).toLocaleString()}</span>
+              </div>
+              {appr.comment && <p style={{ fontSize: 12, color: 'var(--text-primary)', margin: 0 }}>{appr.comment}</p>}
+            </div>
+          ))}
+
+          {plan.blocks.filter(b => b.override_reason).length === 0 && plan.approvals.length === 0 && (
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>
+              No audit entries yet. Overrides and approvals will appear here.
+            </p>
+          )}
         </div>
       )}
     </div>

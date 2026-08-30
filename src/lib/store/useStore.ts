@@ -1,60 +1,77 @@
 import { create } from 'zustand';
-import { User, Defect, BlockPlan, KPISnapshot, Department, Criticality } from '../../types';
-import { SEEDED_USERS, SEEDED_DEFECTS, SEEDED_PLANS, SEEDED_KPI } from '../mocks/seedData';
-import { db } from '../db/dexie';
+import { api, setToken, getToken, ApiUser, ApiDefect, ApiPlan, ApiKPI, ApiBlock } from '../api';
 
 export type NetworkTier = 'ONLINE' | '3G' | 'OFFLINE';
 
 interface State {
-  currentUser: User;
+  currentUser: ApiUser | null;
+  token: string | null;
   networkTier: NetworkTier;
-  currentRoute: string; // '/dashboard', '/block-plans', etc.
+  currentRoute: string;
   selectedPlanId: string | null;
   selectedDefectId: string | null;
-  
-  // Data lists
-  defects: Defect[];
-  plans: BlockPlan[];
-  kpi: KPISnapshot;
-  
-  // Filters
-  filterDept: Department | 'ALL';
-  filterCriticality: Criticality | 'ALL';
-  filterSection: string | 'ALL';
+
+  defects: ApiDefect[];
+  plans: ApiPlan[];
+  kpi: ApiKPI | null;
+
+  filterDept: string;
+  filterCriticality: string;
+  filterSection: string;
   searchQuery: string;
 
-  // Language
   lang: 'EN' | 'HI';
+  loading: boolean;
+  error: string | null;
 
   // Actions
-  setCurrentUser: (user: User) => void;
+  login: (email: string, password: string) => Promise<void>;
+  demoLogin: (role: string) => Promise<void>;
+  logout: () => void;
+  restoreSession: () => Promise<boolean>;
+
   setNetworkTier: (tier: NetworkTier) => void;
   setCurrentRoute: (route: string) => void;
   setSelectedPlanId: (id: string | null) => void;
   setSelectedDefectId: (id: string | null) => void;
-  setFilterDept: (dept: Department | 'ALL') => void;
-  setFilterCriticality: (crit: Criticality | 'ALL') => void;
-  setFilterSection: (sec: string | 'ALL') => void;
+  setFilterDept: (dept: string) => void;
+  setFilterCriticality: (crit: string) => void;
+  setFilterSection: (sec: string) => void;
   setSearchQuery: (q: string) => void;
   setLang: (lang: 'EN' | 'HI') => void;
 
-  // Mutators
-  addDefect: (defect: Omit<Defect, 'id' | 'reportedAt' | 'priorityScore' | 'daysOverdue'>) => Promise<void>;
-  overrideBlock: (planId: string, blockId: string, reason: string) => void;
-  approvePlan: (planId: string, userRole: string, userName: string, note?: string) => void;
-  generateNewPlan: (newPlan: BlockPlan) => void;
+  fetchDefects: (params?: Record<string, string>) => Promise<void>;
+  fetchPlans: () => Promise<void>;
+  fetchKPI: () => Promise<void>;
+  fetchAll: () => Promise<void>;
+
+  createDefect: (data: Record<string, unknown>) => Promise<ApiDefect>;
+  generatePlan: (data: Record<string, unknown>) => Promise<ApiPlan>;
+  approvePlan: (planId: string, action: string, comment?: string) => Promise<void>;
+  overrideBlock: (planId: string, blockId: string, reason: string) => Promise<void>;
+  updateBlockStatus: (planId: string, blockId: string, status: string, actualStart?: string, actualEnd?: string) => Promise<void>;
+}
+
+function landingRoute(role: string): string {
+  if (role === 'JUNIOR_ENGINEER') return '/field';
+  if (role === 'DIVISIONAL_BLOCK_PLANNER') return '/block-plans';
+  if (role === 'SUPER_ADMIN' || role === 'ZONAL_ADMIN') return '/admin/users';
+  if (role === 'READ_ONLY_VIEWER') return '/reports';
+  if (role.startsWith('SSE_')) return '/defects';
+  return '/dashboard';
 }
 
 export const useStore = create<State>((set, get) => ({
-  currentUser: SEEDED_USERS[0], // Divisional Block Planner default
+  currentUser: null,
+  token: null,
   networkTier: 'ONLINE',
-  currentRoute: '/dashboard',
-  selectedPlanId: 'BLK-2026-WK13',
-  selectedDefectId: 'TMS-2026-4001',
+  currentRoute: '/login',
+  selectedPlanId: null,
+  selectedDefectId: null,
 
-  defects: SEEDED_DEFECTS,
-  plans: SEEDED_PLANS,
-  kpi: SEEDED_KPI,
+  defects: [],
+  plans: [],
+  kpi: null,
 
   filterDept: 'ALL',
   filterCriticality: 'ALL',
@@ -62,18 +79,68 @@ export const useStore = create<State>((set, get) => ({
   searchQuery: '',
 
   lang: 'EN',
+  loading: false,
+  error: null,
 
-  setCurrentUser: (user) => {
-    // Route user to their role-specific landing page
-    let landingRoute = '/dashboard';
-    if (user.role === 'JUNIOR_ENGINEER') landingRoute = '/field';
-    else if (user.role === 'DIVISIONAL_BLOCK_PLANNER') landingRoute = '/block-plans';
-    else if (user.role === 'SENIOR_OFFICER') landingRoute = '/dashboard';
-    else if (user.role === 'SUPER_ADMIN' || user.role === 'ZONAL_ADMIN') landingRoute = '/admin/users';
-    else if (user.role === 'READ_ONLY_VIEWER') landingRoute = '/map';
-    else if (user.role.startsWith('SSE_')) landingRoute = '/defects';
+  login: async (email, password) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await api.auth.login(email, password);
+      setToken(res.access_token);
+      set({
+        currentUser: res.user,
+        token: res.access_token,
+        currentRoute: landingRoute(res.user.role),
+        loading: false,
+      });
+      get().fetchAll();
+    } catch (e: any) {
+      set({ loading: false, error: e.message });
+      throw e;
+    }
+  },
 
-    set({ currentUser: user, currentRoute: landingRoute });
+  demoLogin: async (role) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await api.auth.demoLogin(role);
+      setToken(res.access_token);
+      set({
+        currentUser: res.user,
+        token: res.access_token,
+        currentRoute: landingRoute(res.user.role),
+        loading: false,
+      });
+      get().fetchAll();
+    } catch (e: any) {
+      set({ loading: false, error: e.message });
+    }
+  },
+
+  logout: () => {
+    setToken(null);
+    set({
+      currentUser: null,
+      token: null,
+      currentRoute: '/login',
+      defects: [],
+      plans: [],
+      kpi: null,
+    });
+  },
+
+  restoreSession: async () => {
+    const token = getToken();
+    if (!token) return false;
+    try {
+      const user = await api.auth.me();
+      set({ currentUser: user, token, currentRoute: landingRoute(user.role) });
+      get().fetchAll();
+      return true;
+    } catch {
+      setToken(null);
+      return false;
+    }
   },
 
   setNetworkTier: (tier) => set({ networkTier: tier }),
@@ -86,78 +153,76 @@ export const useStore = create<State>((set, get) => ({
   setSearchQuery: (q) => set({ searchQuery: q }),
   setLang: (lang) => set({ lang }),
 
-  addDefect: async (newDefectData) => {
-    const state = get();
-    const newId = `${newDefectData.source}-2026-${Math.floor(Math.random() * 9000) + 1000}`;
-    const newDefect: Defect = {
-      ...newDefectData,
-      id: newId,
-      reportedAt: new Date().toISOString(),
-      daysOverdue: 0,
-      priorityScore: Math.floor(Math.random() * 30) + 60,
-    };
-
-    set({ defects: [newDefect, ...state.defects] });
-
-    // Store in IndexedDB
+  fetchDefects: async (params) => {
     try {
-      await db.defects.add(newDefect);
-      if (state.networkTier === 'OFFLINE') {
-        await db.queuedSubmissions.add({
-          type: 'NEW_DEFECT',
-          payload: newDefect,
-          createdAt: new Date().toISOString(),
-          status: 'PENDING'
-        });
-      }
+      const defects = await api.defects.list(params);
+      set({ defects });
     } catch (e) {
-      console.warn('IndexedDB write warning:', e);
+      console.error('Failed to fetch defects:', e);
     }
   },
 
-  overrideBlock: (planId, blockId, reason) => {
-    const state = get();
-    const updatedPlans = state.plans.map(plan => {
-      if (plan.id !== planId) return plan;
-      return {
-        ...plan,
-        blocks: plan.blocks.map(blk => {
-          if (blk.id !== blockId) return blk;
-          return {
-            ...blk,
-            manuallyOverridden: true,
-            overrideReason: reason
-          };
-        })
-      };
-    });
-    set({ plans: updatedPlans });
+  fetchPlans: async () => {
+    try {
+      const plans = await api.plans.list();
+      set({ plans });
+      if (plans.length > 0 && !get().selectedPlanId) {
+        set({ selectedPlanId: plans[0].id });
+      }
+    } catch (e) {
+      console.error('Failed to fetch plans:', e);
+    }
   },
 
-  approvePlan: (planId, userRole, userName, note) => {
-    const state = get();
-    const updatedPlans = state.plans.map(plan => {
-      if (plan.id !== planId) return plan;
-      const newApprovals = [
-        ...plan.approvals,
-        { role: userRole, user: userName, action: 'APPROVED' as const, reason: note, at: new Date().toISOString() }
-      ];
-      // If Senior Officer approved, set plan status to APPROVED
-      const isFinalApproval = userRole === 'SENIOR_OFFICER' || newApprovals.length >= 2;
-      return {
-        ...plan,
-        status: isFinalApproval ? ('APPROVED' as const) : ('PENDING_APPROVAL' as const),
-        approvals: newApprovals
-      };
-    });
-    set({ plans: updatedPlans });
+  fetchKPI: async () => {
+    try {
+      const kpi = await api.kpi();
+      set({ kpi });
+    } catch (e) {
+      console.error('Failed to fetch KPI:', e);
+    }
   },
 
-  generateNewPlan: (newPlan) => {
-    const state = get();
-    set({
-      plans: [newPlan, ...state.plans],
-      selectedPlanId: newPlan.id
-    });
-  }
+  fetchAll: async () => {
+    const { fetchDefects, fetchPlans, fetchKPI } = get();
+    await Promise.all([fetchDefects({ limit: '300' }), fetchPlans(), fetchKPI()]);
+  },
+
+  createDefect: async (data) => {
+    const defect = await api.defects.create(data as any);
+    set({ defects: [defect, ...get().defects] });
+    return defect;
+  },
+
+  generatePlan: async (data) => {
+    set({ loading: true });
+    try {
+      const plan = await api.plans.generate(data as any);
+      set({
+        plans: [plan, ...get().plans],
+        selectedPlanId: plan.id,
+        loading: false,
+      });
+      get().fetchKPI();
+      return plan;
+    } catch (e) {
+      set({ loading: false });
+      throw e;
+    }
+  },
+
+  approvePlan: async (planId, action, comment) => {
+    await api.plans.approve(planId, action, comment);
+    await get().fetchPlans();
+  },
+
+  overrideBlock: async (planId, blockId, reason) => {
+    await api.plans.overrideBlock(planId, blockId, reason);
+    await get().fetchPlans();
+  },
+
+  updateBlockStatus: async (planId, blockId, status, actualStart, actualEnd) => {
+    await api.plans.updateBlockStatus(planId, blockId, status, actualStart, actualEnd);
+    await get().fetchPlans();
+  },
 }));

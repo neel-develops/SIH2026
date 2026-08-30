@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore } from './lib/store/useStore';
 import { Sidebar } from './components/shared/Sidebar';
 import { TopBar } from './components/shared/TopBar';
@@ -14,34 +14,44 @@ import { MapView } from './views/MapView';
 import { ReportsView } from './views/ReportsView';
 import { FieldPWAView } from './views/FieldPWAView';
 import { AdminUsersView } from './views/AdminUsersView';
-import { db } from './lib/db/dexie';
+import { AIChatWidget } from './components/ai/AIChatWidget';
 
 export const App: React.FC = () => {
-  const { currentRoute } = useStore();
+  const { currentRoute, currentUser, restoreSession } = useStore();
+  const [restoring, setRestoring] = useState(true);
 
   useEffect(() => {
-    db.open().catch((err) => {
-      console.warn('Failed to open Dexie IndexedDB:', err);
-    });
+    restoreSession().finally(() => setRestoring(false));
   }, []);
 
-  if (currentRoute === '/login') {
+  if (restoring) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-base)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="pulse-amber" style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--amber-500)', margin: '0 auto 16px' }} />
+          <p style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>Loading RailSync...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser || currentRoute === '/login') {
     return <LoginView />;
   }
 
   const renderRoute = () => {
     switch (currentRoute) {
-      case '/dashboard':        return <DashboardView />;
-      case '/block-plans':      return <BlockPlansView />;
+      case '/dashboard':            return <DashboardView />;
+      case '/block-plans':          return <BlockPlansView />;
       case '/block-plans/generate': return <GeneratePlanView />;
       case '/block-plans/detail':   return <PlanDetailView />;
-      case '/defects':          return <DefectsView />;
-      case '/defects/detail':   return <DefectDetailView />;
-      case '/defects/new':      return <NewDefectView />;
-      case '/map':              return <MapView />;
-      case '/reports':          return <ReportsView />;
-      case '/field':            return <FieldPWAView />;
-      case '/admin/users':      return <AdminUsersView />;
+      case '/defects':              return <DefectsView />;
+      case '/defects/detail':       return <DefectDetailView />;
+      case '/defects/new':          return <NewDefectView />;
+      case '/map':                  return <MapView />;
+      case '/reports':              return <ReportsView />;
+      case '/field':                return <FieldPWAView />;
+      case '/admin/users':          return <AdminUsersView />;
       default:
         if (currentRoute.startsWith('/block-plans/')) return <PlanDetailView />;
         return <DashboardView />;
@@ -50,10 +60,7 @@ export const App: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1, background: 'var(--bg-base)' }}>
-      {/* Fixed sidebar */}
       <Sidebar />
-
-      {/* Main content column */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <TopBar />
         <main style={{ flex: 1, padding: '28px 32px', overflowY: 'auto' }}>
@@ -62,6 +69,7 @@ export const App: React.FC = () => {
           </div>
         </main>
       </div>
+      <AIChatWidget />
     </div>
   );
 };

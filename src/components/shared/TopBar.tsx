@@ -1,16 +1,35 @@
 import React, { useState } from 'react';
 import { useStore, NetworkTier } from '../../lib/store/useStore';
 import { useTranslation } from '../../lib/i18n/translations';
-import { SEEDED_USERS } from '../../lib/mocks/seedData';
 import { Bell, BarChart2, Wifi, WifiOff, SignalLow, Globe, UserCheck, X, CheckCircle2 } from 'lucide-react';
 
+/** Demo personas available for quick switching (role string -> display label). */
+const DEMO_PERSONAS: { role: string; label: string }[] = [
+  { role: 'SUPER_ADMIN',                label: 'Super Admin' },
+  { role: 'ZONAL_ADMIN',                label: 'Zonal Admin' },
+  { role: 'DIVISIONAL_BLOCK_PLANNER',   label: 'Divisional Block Planner' },
+  { role: 'SENIOR_OFFICER',             label: 'Senior DRM Officer' },
+  { role: 'SSE_ENGINEERING',            label: 'SSE Engineering' },
+  { role: 'SSE_SIGNAL_TELECOM',         label: 'SSE Signal & Telecom' },
+  { role: 'SSE_TRACTION_DISTRIBUTION',  label: 'SSE Traction Distribution' },
+  { role: 'JUNIOR_ENGINEER',            label: 'Junior Engineer' },
+  { role: 'READ_ONLY_VIEWER',           label: 'Read-Only Viewer' },
+];
+
 export const TopBar: React.FC = () => {
-  const { currentUser, setCurrentUser, networkTier, setNetworkTier, lang, setLang, currentRoute, setCurrentRoute } = useStore();
+  const { currentUser, demoLogin, networkTier, setNetworkTier, lang, setLang, currentRoute, setCurrentRoute } = useStore();
   const t = useTranslation(lang);
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [personaToast, setPersonaToast] = useState<string | null>(null);
+
+  const userRole = currentUser?.role ?? 'READ_ONLY_VIEWER';
+
+  /** Construct a designation string from role + department (ApiUser has no `designation` field). */
+  const designation = currentUser
+    ? [currentUser.role.replace(/_/g, ' '), currentUser.department].filter(Boolean).join(' — ')
+    : '';
 
   // Notifications mock feed
   const notifications = [
@@ -117,12 +136,13 @@ export const TopBar: React.FC = () => {
           }}>
             <UserCheck size={14} color="var(--amber-700)" />
             <select
-              value={currentUser.id}
+              value={userRole}
               onChange={(e) => {
-                const u = SEEDED_USERS.find((usr) => usr.id === e.target.value);
-                if (u) {
-                  setCurrentUser(u);
-                  setPersonaToast(`Active Officer: ${u.name} (${u.role.replace(/_/g, ' ')})`);
+                const role = e.target.value;
+                const persona = DEMO_PERSONAS.find((p) => p.role === role);
+                if (persona) {
+                  demoLogin(role);
+                  setPersonaToast(`Switching to: ${persona.label}`);
                   setTimeout(() => setPersonaToast(null), 3000);
                 }
               }}
@@ -132,9 +152,9 @@ export const TopBar: React.FC = () => {
                 cursor: 'pointer', fontFamily: 'Quicksand, sans-serif',
               }}
             >
-              {SEEDED_USERS.map((usr) => (
-                <option key={usr.id} value={usr.id} style={{ background: '#fff', color: '#111' }}>
-                  {usr.name} — {usr.designation}
+              {DEMO_PERSONAS.map((p) => (
+                <option key={p.role} value={p.role} style={{ background: '#fff', color: '#111' }}>
+                  {p.label}
                 </option>
               ))}
             </select>
@@ -229,13 +249,13 @@ export const TopBar: React.FC = () => {
               fontWeight: 700, fontSize: 13, color: 'var(--amber-700)', cursor: 'pointer',
             }}
           >
-            {currentUser.name.charAt(0)}
+            {currentUser?.name?.charAt(0) ?? '?'}
           </button>
         </div>
       </header>
 
       {/* User Profile Modal */}
-      {showProfileModal && (
+      {showProfileModal && currentUser && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,14,0.6)', backdropFilter: 'blur(6px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <div className="warm-card" style={{ maxWidth: 400, width: '100%', padding: '24px 28px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--border-soft)' }}>
@@ -253,13 +273,13 @@ export const TopBar: React.FC = () => {
                 {currentUser.name.charAt(0)}
               </div>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{currentUser.name}</h3>
-              <p className="font-mono" style={{ fontSize: 12, color: 'var(--amber-700)', margin: '2px 0 0' }}>{currentUser.designation}</p>
+              <p className="font-mono" style={{ fontSize: 12, color: 'var(--amber-700)', margin: '2px 0 0' }}>{designation}</p>
             </div>
             <div className="font-mono" style={{ background: 'var(--bg-raised)', padding: '12px 14px', borderRadius: 12, border: '1px solid var(--border-soft)', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
               <div><strong style={{ color: 'var(--text-secondary)' }}>Role:</strong> {currentUser.role}</div>
-              <div><strong style={{ color: 'var(--text-secondary)' }}>Zone/Division:</strong> {currentUser.scope.zone} / {currentUser.scope.division}</div>
-              <div><strong style={{ color: 'var(--text-secondary)' }}>Sections:</strong> {currentUser.scope.sections.join(', ')}</div>
-              <div><strong style={{ color: 'var(--text-secondary)' }}>Status:</strong> <span className="chip chip-sage" style={{ fontSize: 10 }}>Authenticated TOTP</span></div>
+              <div><strong style={{ color: 'var(--text-secondary)' }}>Zone/Division:</strong> {currentUser.zone} / {currentUser.division}</div>
+              <div><strong style={{ color: 'var(--text-secondary)' }}>Sections:</strong> {currentUser.assigned_sections.join(', ') || 'N/A'}</div>
+              <div><strong style={{ color: 'var(--text-secondary)' }}>MFA:</strong> <span className={`chip ${currentUser.mfa_enabled ? 'chip-sage' : 'chip-amber'}`} style={{ fontSize: 10 }}>{currentUser.mfa_enabled ? 'Enabled' : 'Disabled'}</span></div>
             </div>
             <button onClick={() => setShowProfileModal(false)} className="btn-amber" style={{ width: '100%', justifyContent: 'center' }}>
               Close Profile

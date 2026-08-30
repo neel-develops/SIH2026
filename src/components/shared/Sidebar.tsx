@@ -7,9 +7,11 @@ import {
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
-  const { currentRoute, setCurrentRoute, currentUser, lang } = useStore();
+  const { currentRoute, setCurrentRoute, currentUser, logout, lang } = useStore();
   const t = useTranslation(lang);
   const [showSupportModal, setShowSupportModal] = useState(false);
+
+  const userRole = currentUser?.role ?? 'READ_ONLY_VIEWER';
 
   // Role permissions filtering
   const allNavItems = [
@@ -23,10 +25,10 @@ export const Sidebar: React.FC = () => {
   ];
 
   const allowedNavItems = allNavItems.filter((item) =>
-    item.roles.includes(currentUser.role)
+    item.roles.includes(userRole)
   );
 
-  const canGenerate = currentUser.role === 'DIVISIONAL_BLOCK_PLANNER' || currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ZONAL_ADMIN';
+  const canGenerate = userRole === 'DIVISIONAL_BLOCK_PLANNER' || userRole === 'SUPER_ADMIN' || userRole === 'ZONAL_ADMIN';
 
   return (
     <>
@@ -44,27 +46,27 @@ export const Sidebar: React.FC = () => {
         zIndex: 30,
       }}>
         {/* Brand Header */}
-        <div 
-          style={{ 
-            marginBottom: 24, 
-            padding: '4px 2px 0 2px', 
+        <div
+          style={{
+            marginBottom: 24,
+            padding: '4px 2px 0 2px',
             cursor: 'pointer',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start'
-          }} 
+          }}
           onClick={() => setCurrentRoute('/dashboard')}
         >
           <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center' }}>
-            <img 
-              src="/logo.png" 
-              alt="RailSync Logo" 
+            <img
+              src="/logo.png"
+              alt="RailSync Logo"
               style={{
                 height: 38,
                 maxWidth: '100%',
                 objectFit: 'contain',
                 display: 'block',
-              }} 
+              }}
             />
           </div>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.01em' }}>
@@ -92,7 +94,7 @@ export const Sidebar: React.FC = () => {
           }}>
             <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
               <Lock size={11} color="var(--text-muted)" />
-              {currentUser.role === 'READ_ONLY_VIEWER' ? 'Read-Only Viewer' : `${currentUser.role.replace(/_/g, ' ')} Access`}
+              {userRole === 'READ_ONLY_VIEWER' ? 'Read-Only Viewer' : `${userRole.replace(/_/g, ' ')} Access`}
             </span>
           </div>
         )}
@@ -123,8 +125,8 @@ export const Sidebar: React.FC = () => {
             border: '1px solid var(--border-soft)',
             marginBottom: 6,
           }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>{currentUser.name}</div>
-            <div className="font-mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--amber-700)' }}>{currentUser.role.replace(/_/g, ' ')}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>{currentUser?.name ?? 'Guest'}</div>
+            <div className="font-mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--amber-700)' }}>{userRole.replace(/_/g, ' ')}</div>
           </div>
           <button className="sidebar-nav-item" style={{ fontSize: 13 }} onClick={() => setShowSupportModal(true)}>
             <HelpCircle size={16} />
@@ -133,7 +135,7 @@ export const Sidebar: React.FC = () => {
           <button
             className="sidebar-nav-item"
             style={{ fontSize: 13 }}
-            onClick={() => setCurrentRoute('/login')}
+            onClick={() => logout()}
           >
             <LogOut size={16} />
             <span>{t.signOut}</span>

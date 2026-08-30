@@ -7,11 +7,30 @@ export const BlockPlansView: React.FC = () => {
   const { plans, selectedPlanId, setSelectedPlanId, overrideBlock, setCurrentRoute } = useStore();
   const currentPlan = plans.find((p) => p.id === selectedPlanId) || plans[0];
 
+  if (!currentPlan) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20, alignItems: 'center', padding: 40 }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No plans available. Generate a new AI plan to get started.</p>
+        <button onClick={() => setCurrentRoute('/block-plans/generate')} className="btn-amber" style={{ fontSize: 13 }}>
+          <Plus size={15} />
+          Generate New AI Plan
+        </button>
+      </div>
+    );
+  }
+
+  const totalDefects = currentPlan.blocks.reduce((sum, b) => sum + b.defect_ids.length, 0);
+  const combinedCount = currentPlan.blocks.filter((b) => b.is_combined).length;
+  const combinedRate = currentPlan.blocks.length > 0
+    ? Math.round((combinedCount / currentPlan.blocks.length) * 100)
+    : (currentPlan.combined_blocks ?? 0);
+  const solveTimeSec = currentPlan.solver_time_ms != null ? (currentPlan.solver_time_ms / 1000).toFixed(1) : 'N/A';
+
   const metrics = [
-    { label: 'Defects Covered', value: `${currentPlan.metrics.defectsScheduled} / ${currentPlan.metrics.defectsTotal}`, color: 'var(--rail-eng)' },
-    { label: 'Combined Block Rate', value: `${currentPlan.metrics.combinedBlockRatePct}%`, color: 'var(--amber-700)' },
-    { label: 'Downtime Reduction', value: `${currentPlan.metrics.downtimeReductionPct}%`, color: 'var(--rail-snt)' },
-    { label: 'Projected AAI', value: `${currentPlan.metrics.projectedAAI}%`, color: 'var(--rail-eng)' },
+    { label: 'Defects Covered', value: `${currentPlan.tasks_scheduled ?? totalDefects}`, color: 'var(--rail-eng)' },
+    { label: 'Combined Block Rate', value: `${currentPlan.combined_blocks ?? combinedRate}%`, color: 'var(--amber-700)' },
+    { label: 'Conflicts Resolved', value: `${currentPlan.conflicts_resolved ?? 0}`, color: 'var(--rail-snt)' },
+    { label: 'Projected AAI', value: currentPlan.aai_after != null ? `${currentPlan.aai_after}%` : 'N/A', color: 'var(--rail-eng)' },
   ];
 
   return (
@@ -28,7 +47,7 @@ export const BlockPlansView: React.FC = () => {
             </span>
           </div>
           <p className="font-mono" style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>
-            Section: {currentPlan.sectionId} · Generated: {new Date(currentPlan.generatedAt).toLocaleDateString()} · Solve Time: {currentPlan.solveTimeSec}s
+            {currentPlan.name} · Type: {currentPlan.plan_type} · Generated: {new Date(currentPlan.created_at).toLocaleDateString()} · Solve Time: {solveTimeSec}s
           </p>
         </div>
 
@@ -47,7 +66,7 @@ export const BlockPlansView: React.FC = () => {
             >
               {plans.map((p) => (
                 <option key={p.id} value={p.id} style={{ background: '#fff' }}>
-                  {p.id} ({p.horizon} - {p.status})
+                  {p.name} ({p.plan_type} - {p.status})
                 </option>
               ))}
             </select>
@@ -80,7 +99,7 @@ export const BlockPlansView: React.FC = () => {
       </div>
 
       {/* Gantt chart */}
-      <GanttChart blocks={currentPlan.blocks} onOverrideBlock={(bId, r) => overrideBlock(currentPlan.id, bId, r)} />
+      <GanttChart blocks={currentPlan.blocks} planId={currentPlan.id} horizonStart={currentPlan.horizon_start} onOverrideBlock={(bId, r) => overrideBlock(currentPlan.id, bId, r)} />
     </div>
   );
 };
