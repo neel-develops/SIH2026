@@ -144,7 +144,7 @@ Latest Plan:
 
 async def chat_assistant(question: str, context: dict) -> str:
     """Conversational AI assistant for railway officers."""
-    system = f"""You are RailSync AI, the intelligent assistant for the AABPS (AI-Powered Automatic Block Planning System)
+    system = f"""You are RailSync AI, the intelligent assistant for the RailSync (AI-Powered Automatic Block Planning System)
 deployed on the CSTM-PUNE corridor, Central Railway, Mumbai Division.
 
 You help railway officers with:

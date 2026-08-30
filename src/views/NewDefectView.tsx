@@ -233,7 +233,7 @@ export const NewDefectView: React.FC = () => {
             className="btn-amber"
             style={{ width: '100%', justifyContent: 'center', fontSize: 14, padding: '12px 0', opacity: submitting ? 0.6 : 1 }}
           >
-            {submitting ? 'Submitting...' : 'Submit Defect to AABPS Database'}
+            {submitting ? 'Submitting...' : 'Submit Defect to RailSync Database'}
           </button>
         </form>
       </div>

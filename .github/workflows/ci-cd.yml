@@ -1,4 +1,4 @@
-name: AABPS CI/CD Pipeline
+name: RailSync CI/CD Pipeline
 
 on:
   push:

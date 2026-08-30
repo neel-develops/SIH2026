@@ -1,5 +1,5 @@
 # Indian Railways Domain Knowledge
-## How Block Planning Works — Context for AABPS Development
+## How Block Planning Works — Context for RailSync Development
 ### Problem Statement ID: 26027 | SIH 2025
 
 ---
@@ -184,24 +184,24 @@ The **Train Graph** (TG) from COA is the primary input for identifying maintenan
 - Created at the start of each financial year (April)
 - Lists all major maintenance activities, their frequency, and required block durations
 - Department: ENG, S&T, TD each create independently
-- **AABPS should integrate all three AMPs**
+- **RailSync should integrate all three AMPs**
 
 ### 5.2 Monthly Block Plan
 - Derived from AMP
 - Accounts for train timetable, festivals, special occasions
 - Must be submitted to Control Office by 25th of previous month
-- **AABPS generates this automatically**
+- **RailSync generates this automatically**
 
 ### 5.3 Weekly Block Plan
 - Detailed plan for the coming 7 days
 - Incorporates urgent defects that arose during the month
 - Final approval by Divisional Block Planning Officer
-- **AABPS primary output**
+- **RailSync primary output**
 
 ### 5.4 Daily Block Plan
 - Same-day emergency blocks only
 - Requires DRM/senior officer approval
-- **AABPS supports emergency block requests**
+- **RailSync supports emergency block requests**
 
 ---
 
@@ -261,13 +261,13 @@ AAI = (Total Available Time - Maintenance Downtime) / Total Available Time × 10
 - Lower AAI → Delays → Passenger dissatisfaction → Revenue loss
 - Combined blocks → One downtime for multiple maintenance activities → Higher AAI
 
-### 7.3 AABPS AAI Target
+### 7.3 RailSync AAI Target
 - Current estimated AAI on IR: ~82–85%
-- AABPS target: ≥ 90% through combined blocks and optimized scheduling
+- RailSync target: ≥ 90% through combined blocks and optimized scheduling
 
 ---
 
-## 8. Current System Limitations (Why AABPS is Needed)
+## 8. Current System Limitations (Why RailSync is Needed)
 
 ### 8.1 Problem with Current BDMS
 
@@ -280,9 +280,9 @@ AAI = (Total Available Time - Maintenance Downtime) / Total Available Time × 10
 | No cross-department visibility | ENG doesn't know if TD is also planning work in same section |
 | Reactive, not proactive | Many blocks are emergency-driven rather than planned |
 
-### 8.2 AABPS Solution Mapping
+### 8.2 RailSync Solution Mapping
 
-| Problem | AABPS Solution |
+| Problem | RailSync Solution |
 |---|---|
 | Independent block requests | Unified AI engine sees all three departments' needs |
 | No prioritization | XGBoost classifier scores each defect by criticality |

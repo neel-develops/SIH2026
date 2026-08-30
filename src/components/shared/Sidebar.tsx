@@ -157,7 +157,7 @@ export const Sidebar: React.FC = () => {
               </button>
             </div>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
-              AABPS Help Desk — Central Railway Control Room, Mumbai Division.
+              RailSync Help Desk — Central Railway Control Room, Mumbai Division.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
               <div style={{ background: 'var(--bg-raised)', padding: '10px 14px', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -170,7 +170,7 @@ export const Sidebar: React.FC = () => {
               <div style={{ background: 'var(--bg-raised)', padding: '10px 14px', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Mail size={15} color="var(--amber-700)" />
                 <div>
-                  <div className="font-mono" style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>support.aabps@railnet.gov.in</div>
+                  <div className="font-mono" style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>support.railsync@railnet.gov.in</div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Response within 15 minutes</div>
                 </div>
               </div>

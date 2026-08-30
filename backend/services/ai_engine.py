@@ -1,5 +1,5 @@
 """
-AI Engine for AABPS — the core differentiator.
+AI Engine for RailSync — the core differentiator.
 
 Pipeline:
   1. Priority Scoring (XGBoost-style weighted model)
@@ -286,11 +286,11 @@ def calculate_aai(blocks: list[dict], total_hours: float = 168.0) -> dict:
     if not sections:
         return {"aai_before": 82.0, "aai_after": 82.0, "improvement": 0}
 
-    # Before AABPS: assume separate blocks for each department
+    # Before RailSync: assume separate blocks for each department
     separate_downtime = sum(v * 1.4 for v in section_downtime.values())
     aai_before = max(75.0, (1 - separate_downtime / (len(sections) * total_hours)) * 100)
 
-    # After AABPS: with combined blocks
+    # After RailSync: with combined blocks
     actual_downtime = sum(section_downtime.values())
     aai_after = min(96.0, (1 - actual_downtime / (len(sections) * total_hours)) * 100)
 

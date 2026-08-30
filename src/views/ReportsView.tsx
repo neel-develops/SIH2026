@@ -45,7 +45,7 @@ export const ReportsView: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'aabps-executive-report.pdf';
+      a.download = 'railsync-executive-report.pdf';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -64,7 +64,7 @@ export const ReportsView: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'aabps-analytics-data.xlsx';
+      a.download = 'railsync-analytics-data.xlsx';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -116,7 +116,7 @@ export const ReportsView: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <TrendingUp size={16} color="var(--amber-700)" />
             <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-              Before vs. After AABPS — Executive Impact Slide
+              Before vs. After RailSync — Executive Impact Slide
             </h3>
           </div>
           <span className="chip chip-amber" style={{ fontSize: 11 }}>

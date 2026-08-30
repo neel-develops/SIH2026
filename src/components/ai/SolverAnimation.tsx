@@ -77,7 +77,7 @@ export const SolverAnimation: React.FC<SolverAnimationProps> = ({ onGenerate, on
           </div>
           <div>
             <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 2px' }}>
-              AABPS AI Engine — Real OR-Tools CP-SAT Solver
+              RailSync AI Engine — Real OR-Tools CP-SAT Solver
             </h2>
             <p className="font-mono" style={{ fontSize: 11, color: 'var(--amber-700)', margin: 0 }}>
               {!isFinished ? 'Running constraint optimization on backend...' : error ? 'Engine error' : 'Optimization complete'}

@@ -1,5 +1,5 @@
 # API Integration & Dataset Guide
-## AI-Powered Automatic Block Planning System (AABPS)
+## AI-Powered Automatic Block Planning System (RailSync)
 ### Problem Statement ID: 26027 | SIH 2025
 
 ---
@@ -12,7 +12,7 @@
 **Authentication**: API Key in header
 **Free Tier**: Available
 
-| Endpoint | Data | Use in AABPS |
+| Endpoint | Data | Use in RailSync |
 |---|---|---|
 | `/TrainBetweenStation/apikey/{key}/From/{from}/To/{to}` | Trains between stations | Identify trains passing through maintenance section |
 | `/TrainSchedule/apikey/{key}/TrainNumber/{train_no}` | Full timetable of a train | Exact timing through each station |
@@ -49,12 +49,12 @@ async function getTrainsInSection(fromStation, toStation, date) {
 **Authentication**: RapidAPI Key in headers
 **Free Tier**: 100 req/month (Basic plan), upgrade available
 
-| Endpoint | Data | Use in AABPS |
+| Endpoint | Data | Use in RailSync |
 |---|---|---|
 | `/trainsList` | All trains | Station-to-station train listing |
 | `/getTrainRunningStatus` | Live train position | Real-time corridor availability |
 | `/getTrainSchedule` | Train timetable | Station-wise timing for block windows |
-| `/getFareDetail` | Train class fare | (Not used in AABPS) |
+| `/getFareDetail` | Train class fare | (Not used in RailSync) |
 | `/getStationByName` | Station info | Station master lookup |
 
 **Integration Pattern**:

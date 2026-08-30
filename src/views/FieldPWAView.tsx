@@ -88,7 +88,7 @@ export const FieldPWAView: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Smartphone size={18} color="#FCD34D" />
             <div>
-              <div className="font-mono" style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>AABPS FIELD PWA</div>
+              <div className="font-mono" style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>RailSync FIELD PWA</div>
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)' }}>{currentUser?.name || 'Field User'} ({currentUser?.role || 'N/A'})</div>
             </div>
           </div>

@@ -36,9 +36,9 @@ export const translations = {
     signatureImpactTitle: 'RailSync Signature Impact — Cross-Department Block Consolidation',
     reset3Blocks: 'Reset 3 Blocks View',
     simulateAIConsolidation: 'Simulate AI Consolidation',
-    beforeAABPS: 'BEFORE RailSync (Legacy BDMS)',
+    beforeRailSync: 'BEFORE RailSync (Legacy BDMS)',
     beforeSub: '3 Blocks = 9.5 Hrs Total',
-    afterAABPS: 'AFTER RailSync (AI Combined Block)',
+    afterRailSync: 'AFTER RailSync (AI Combined Block)',
     afterSub: '1 Block = 3.5 Hrs (−37%)',
 
     // Block Plans View
@@ -124,9 +124,9 @@ export const translations = {
     signatureImpactTitle: 'RailSync हस्ताक्षर प्रभाव — अंतर-विभागीय ब्लॉक समेकन',
     reset3Blocks: '3 पृथक ब्लॉक देखें',
     simulateAIConsolidation: 'एआई समेकन का अनुकरण करें',
-    beforeAABPS: 'RailSync से पहले (पुराना तंत्र)',
+    beforeRailSync: 'RailSync से पहले (पुराना तंत्र)',
     beforeSub: '3 ब्लॉक = 9.5 घंटे कुल डाउनटाइम',
-    afterAABPS: 'RailSync के बाद (एआई संयुक्त ब्लॉक)',
+    afterRailSync: 'RailSync के बाद (एआई संयुक्त ब्लॉक)',
     afterSub: '1 ब्लॉक = 3.5 घंटे (−37% डाउनटाइम)',
 
     // Block Plans View
@@ -156,13 +156,13 @@ export const translations = {
     analyticsSub: 'संपत्ति उपलब्धता (AAI), विभागीय अनुपालन और संयुक्त ब्लॉक दक्षता',
     exportPDF: 'आधिकारिक पीडीएफ निर्यात',
     exportExcel: 'एक्सेल (.xlsx) निर्यात',
-    execImpactSlide: 'AABPS से पहले बनाम बाद — कार्यकारी प्रभाव',
+    execImpactSlide: 'RailSync से पहले बनाम बाद — कार्यकारी प्रभाव',
     simulationData: '6 माह सिमुलेशन डेटा',
     plannedVsCompleted: 'अनुभाग अनुसार नियोजित बनाम पूर्ण ब्लॉक',
     defectDistribution: 'विभाग अनुसार त्रुटि वितरण (ENG / S&T / TD)',
 
     // Field PWA View
-    fieldPWATitle: 'AABPS फील्ड PWA',
+    fieldPWATitle: 'RailSync फील्ड PWA',
     quickReportDefect: 'त्वरित त्रुटि रिपोर्ट (GPS + QR)',
     todaysBlocks: 'आज के निर्धारित ब्लॉक (KYN–KSRA)',
     startWork: 'रखरखाव ब्लॉक कार्य प्रारंभ करें',

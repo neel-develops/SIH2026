@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="AABPS — AI-Powered Automatic Block Planning System",
+    title="RailSync — AI-Powered Automatic Block Planning System",
     description="Backend API for Indian Railways maintenance block scheduling with OR-Tools AI optimization",
     version="1.0.0",
     lifespan=lifespan,

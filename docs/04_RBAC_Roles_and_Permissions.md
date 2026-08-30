@@ -1,5 +1,5 @@
 # RBAC (Role-Based Access Control) Document
-## AI-Powered Automatic Block Planning System (AABPS)
+## AI-Powered Automatic Block Planning System (RailSync)
 ### Problem Statement ID: 26027 | SIH 2025
 
 ---

@@ -1,12 +1,12 @@
 # Connectivity & Network Plan
-## AI-Powered Automatic Block Planning System (AABPS)
+## AI-Powered Automatic Block Planning System (RailSync)
 ### Problem Statement ID: 26027 | SIH 2025
 
 ---
 
 ## 1. Overview
 
-Indian Railways operates across 68,000+ route kilometers spanning urban metros, semi-urban towns, and remote rural areas. Field engineers (JE/SSE) often work in areas with limited or intermittent network connectivity. The AABPS must work reliably across all network conditions from 3G to 5G.
+Indian Railways operates across 68,000+ route kilometers spanning urban metros, semi-urban towns, and remote rural areas. Field engineers (JE/SSE) often work in areas with limited or intermittent network connectivity. The RailSync must work reliably across all network conditions from 3G to 5G.
 
 ---
 
@@ -71,7 +71,7 @@ Full-Featured (5G / WiFi / LAN):
 ### 3.2 Network Detection Logic
 
 ```javascript
-// Network Adaptive Service - aabps-network-adapter.js
+// Network Adaptive Service - railsync-network-adapter.js
 
 class NetworkAdapter {
   constructor() {
@@ -256,7 +256,7 @@ Field Sections:
 - **RCIL** = RailTel Corporation of India Limited
 - **BSNL** = Bharat Sanchar Nigam Limited
 
-### 6.2 AABPS Deployment Network
+### 6.2 RailSync Deployment Network
 
 ```
 Internet (Cloudflare CDN)

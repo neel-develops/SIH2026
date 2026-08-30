@@ -1,12 +1,12 @@
 # Prototype Guide & SIH Winning Strategy
-## AI-Powered Automatic Block Planning System (AABPS)
+## AI-Powered Automatic Block Planning System (RailSync)
 ### Problem Statement ID: 26027 | SIH 2025 — MIT-WPU Internal Round
 
 ---
 
 ## 1. What Judges Look For in SIH
 
-| Evaluation Criterion | Weight | How AABPS Addresses It |
+| Evaluation Criterion | Weight | How RailSync Addresses It |
 |---|---|---|
 | **Relevance to Problem** | High | Directly solves BDMS inefficiency, integrates TMS+SMMS+TDMS |
 | **Technical Innovation** | High | OR-Tools optimization + XGBoost AI, not just rule-based |
@@ -63,7 +63,7 @@ Must-have screens for demo:
 
 ### Phase 2: Polish for Demo
 
-- Add realistic charts (AAI trend before vs after AABPS)
+- Add realistic charts (AAI trend before vs after RailSync)
 - Add "Compare: Before vs After" screen
 - Ensure map loads on 3G demo wifi
 - Test PWA install on panel member's phone
@@ -79,7 +79,7 @@ Must-have screens for demo:
 
 ### Minute 1-2: Our Solution
 
-> "AABPS — AI-Powered Automatic Block Planning System. It integrates TMS, SMMS, and TDMS — the three maintenance databases — with the train timetable from COA. One AI, three departments, one coordinated plan."
+> "RailSync — AI-Powered Automatic Block Planning System. It integrates TMS, SMMS, and TDMS — the three maintenance databases — with the train timetable from COA. One AI, three departments, one coordinated plan."
 
 **Show**: System architecture diagram on screen
 
@@ -121,13 +121,13 @@ Must-have screens for demo:
 
 ### Minute 9-10: Q&A Buffer / Conclusion
 
-> "AABPS transforms block planning from a 5-day manual process into a 45-second AI-powered system. Fewer delays, safer infrastructure, more trains on time. We're ready to build this for Indian Railways."
+> "RailSync transforms block planning from a 5-day manual process into a 45-second AI-powered system. Fewer delays, safer infrastructure, more trains on time. We're ready to build this for Indian Railways."
 
 ---
 
 ## 4. Key Differentiators vs Other SIH Teams
 
-| What Others Might Build | What AABPS Does Better |
+| What Others Might Build | What RailSync Does Better |
 |---|---|
 | Simple rule-based scheduler | OR-Tools constraint optimization (provably optimal) |
 | Single department focus | Multi-department integration (ENG + S&T + TD) |
@@ -177,7 +177,7 @@ explain_plan_decision(task_id='T-042')
 
 | Acronym | Full Form |
 |---|---|
-| AABPS | AI-Powered Automatic Block Planning System |
+| RailSync | AI-Powered Automatic Block Planning System |
 | AAI | Asset Availability Index |
 | ADEN | Assistant Divisional Engineer |
 | AEN | Assistant Engineer |
@@ -244,7 +244,7 @@ explain_plan_decision(task_id='T-042')
 ## 7. Repository Structure (GitHub)
 
 ```
-aabps/
+railsync/
 ├── README.md                    # Project overview with demo GIF
 ├── docs/
 │   ├── 01_PRD.md               # This document set
@@ -282,8 +282,8 @@ aabps/
 
 ```bash
 # Quick start for judges to run locally
-git clone https://github.com/your-team/aabps.git
-cd aabps
+git clone https://github.com/your-team/railsync.git
+cd railsync
 
 # Start all services with mock data
 docker-compose up --build

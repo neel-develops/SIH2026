@@ -234,7 +234,7 @@ def export_excel(
     return StreamingResponse(
         output,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": "attachment; filename=AABPS_Report.xlsx"},
+        headers={"Content-Disposition": "attachment; filename=RailSync_Report.xlsx"},
     )
 
 
@@ -253,7 +253,7 @@ def export_pdf(
     styles = getSampleStyleSheet()
     elements = []
 
-    elements.append(Paragraph("AABPS — Block Planning Report", styles["Title"]))
+    elements.append(Paragraph("RailSync — Block Planning Report", styles["Title"]))
     elements.append(Paragraph("AI-Powered Automatic Block Planning System", styles["Subtitle"]))
     elements.append(Spacer(1, 20))
 
@@ -305,5 +305,5 @@ def export_pdf(
     return StreamingResponse(
         output,
         media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=AABPS_Report.pdf"},
+        headers={"Content-Disposition": "attachment; filename=RailSync_Report.pdf"},
     )

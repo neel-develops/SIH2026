@@ -10,7 +10,7 @@ export const BeforeAfterStrip: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Layers size={16} color="var(--amber-700)" />
           <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-            AABPS Signature Impact — Cross-Department Block Consolidation
+            RailSync Signature Impact — Cross-Department Block Consolidation
           </h3>
         </div>
         <button
@@ -32,7 +32,7 @@ export const BeforeAfterStrip: React.FC = () => {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
             <span className="font-mono" style={{ fontSize: 11, fontWeight: 700, color: 'var(--rail-critical)' }}>
-              BEFORE AABPS (Legacy BDMS)
+              BEFORE RailSync (Legacy BDMS)
             </span>
             <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>
               3 Blocks = 9.5 Hrs Total
@@ -81,7 +81,7 @@ export const BeforeAfterStrip: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
             <span className="font-mono" style={{ fontSize: 11, fontWeight: 700, color: 'var(--amber-700)', display: 'flex', alignItems: 'center', gap: 5 }}>
               <CheckCircle2 size={13} color="var(--rail-snt)" />
-              AFTER AABPS (AI Combined Block)
+              AFTER RailSync (AI Combined Block)
             </span>
             <span className="font-mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--rail-snt)' }}>
               1 Block = 3.5 Hrs (−37%)

@@ -4,12 +4,12 @@ let authToken: string | null = null;
 
 export function setToken(token: string | null) {
   authToken = token;
-  if (token) localStorage.setItem('aabps_token', token);
-  else localStorage.removeItem('aabps_token');
+  if (token) localStorage.setItem('railsync_token', token);
+  else localStorage.removeItem('railsync_token');
 }
 
 export function getToken(): string | null {
-  if (!authToken) authToken = localStorage.getItem('aabps_token');
+  if (!authToken) authToken = localStorage.getItem('railsync_token');
   return authToken;
 }
 

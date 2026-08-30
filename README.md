@@ -2,7 +2,7 @@
 
 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Indian_Railways_Official_Logo.svg/200px-Indian_Railways_Official_Logo.svg.png" alt="Indian Railways Logo" width="90"/>
 
-# 🚆 AABPS — AI-Powered Automatic Block Planning System
+# 🚆 RailSync — AI-Powered Automatic Block Planning System
 
 ### Smart India Hackathon 2026 · Problem Statement #26027
 ### Ministry of Railways, Government of India
@@ -24,7 +24,7 @@
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │                                                                              │
-│   BEFORE AABPS                        AFTER AABPS                           │
+│   BEFORE RailSync                        AFTER RailSync                           │
 │   ─────────────                       ───────────                           │
 │   ENG Block ████░░░░░░░░░░            Combined Block ██████░░░░░░           │
 │   S&T Block ░░░░████░░░░░░            (All depts)                           │
@@ -85,7 +85,7 @@ These three departments file maintenance block requests **independently** throug
 
 ## 💡 Our Solution
 
-**AABPS** is a unified, AI-powered block planning system that:
+**RailSync** is a unified, AI-powered block planning system that:
 
 1. **Integrates** TMS + SMMS + TDMS + COA + FOIS + PRS into a single data layer
 2. **Classifies** every defect by criticality using an **XGBoost** ML classifier
@@ -108,7 +108,7 @@ NTES/FOIS ─────┘                                              (Mobil
 
 <div align="center">
 
-| Metric | Before AABPS | After AABPS | Improvement |
+| Metric | Before RailSync | After RailSync | Improvement |
 |---|---|---|---|
 | **Asset Availability Index (AAI)** | ~82% | ≥ 91% | **+9 percentage points** |
 | **Block Planning Time** | 3–5 days | < 45 seconds | **99.4% faster** |
@@ -161,7 +161,7 @@ NTES/FOIS ─────┘                                              (Mobil
 
 ## 🤖 AI/ML Engine
 
-The heart of AABPS is a four-stage AI pipeline:
+The heart of RailSync is a four-stage AI pipeline:
 
 ### Stage 1 — Defect Criticality Classifier
 ```
@@ -274,7 +274,7 @@ Output: 1 block downtime instead of 3 separate downtimes
 
 ## 📶 Network Compatibility (3G / 4G / 5G)
 
-Indian Railways field engineers operate from remote track sections to mountain tunnels. AABPS is built for every network condition:
+Indian Railways field engineers operate from remote track sections to mountain tunnels. RailSync is built for every network condition:
 
 | Feature | Offline | 3G | 4G | 5G / LAN |
 |---|---|---|---|---|
@@ -327,7 +327,7 @@ Nine roles mapped to actual Indian Railways designations:
 
 ### Legacy Systems Integrated
 
-| Acronym | Full Form | Department | Role in AABPS |
+| Acronym | Full Form | Department | Role in RailSync |
 |---|---|---|---|
 | **TMS** | Track Management System | Engineering | Source of track defects |
 | **SMMS** | Signalling Maintenance & Management System | S&T | Source of signal defects |
@@ -495,7 +495,7 @@ SIH2026/
 
 | Acronym | Full Form |
 |---|---|
-| AABPS | AI-Powered Automatic Block Planning System |
+| RailSync | AI-Powered Automatic Block Planning System |
 | AAI | Asset Availability Index |
 | ADEN | Assistant Divisional Engineer |
 | BDMS | Block/Disconnection Management System |

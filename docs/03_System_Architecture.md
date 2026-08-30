@@ -1,12 +1,12 @@
 # System Architecture Document
-## AI-Powered Automatic Block Planning System (AABPS)
+## AI-Powered Automatic Block Planning System (RailSync)
 ### Problem Statement ID: 26027 | SIH 2025
 
 ---
 
 ## 1. Architecture Overview
 
-The AABPS follows a **Cloud-Native Microservices Architecture** deployed on containerized infrastructure. It uses an **event-driven** design with an **AI/ML core** for scheduling optimization.
+The RailSync follows a **Cloud-Native Microservices Architecture** deployed on containerized infrastructure. It uses an **event-driven** design with an **AI/ML core** for scheduling optimization.
 
 ### 1.1 High-Level Architecture Diagram
 
@@ -492,7 +492,7 @@ workbox.routing.registerRoute(
 // - my_section_defects (for field staff)
 // - pending_defect_submissions (queue for when back online)
 
-const db = new Dexie('AABPSOfflineDB');
+const db = new Dexie('RailSyncOfflineDB');
 db.version(1).stores({
   block_plans: 'id, date, section_id, department, status',
   defects: 'id, section_id, criticality, due_date',
@@ -586,7 +586,7 @@ All services communicate via:
 
 ```
 Kubernetes Cluster (Production)
-├── Namespace: aabps-prod
+├── Namespace: railsync-prod
 │   ├── Deployment: auth-service (2 replicas)
 │   ├── Deployment: block-planning-service (3 replicas)
 │   ├── Deployment: ai-engine-service (2 replicas)
@@ -595,13 +595,13 @@ Kubernetes Cluster (Production)
 │   ├── Deployment: report-service (1 replica)
 │   ├── Deployment: frontend (3 replicas, CDN-backed)
 │   └── StatefulSet: celery-worker (3 replicas)
-├── Namespace: aabps-data
+├── Namespace: railsync-data
 │   ├── StatefulSet: postgresql-primary (1)
 │   ├── StatefulSet: postgresql-replica (2)
 │   ├── StatefulSet: redis-cluster (3 replicas)
 │   ├── StatefulSet: kafka-cluster (3 brokers)
 │   └── StatefulSet: elasticsearch (3 nodes)
-└── Namespace: aabps-monitoring
+└── Namespace: railsync-monitoring
     ├── Deployment: prometheus
     ├── Deployment: grafana
     └── Deployment: kibana
@@ -621,7 +621,7 @@ GitHub Actions triggered
         ├── Security Scan (Trivy for CVEs)
         │
         ▼
-Deploy to Staging (aabps-staging namespace)
+Deploy to Staging (railsync-staging namespace)
         │
         ├── Integration Tests (Postman collections)
         ├── E2E Tests (Playwright)

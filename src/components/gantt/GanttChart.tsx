@@ -81,7 +81,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({ blocks, planId, horizonS
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
             <Calendar size={16} color="var(--amber-700)" />
-            <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>AABPS Interactive Block Gantt Timeline</span>
+            <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>RailSync Interactive Block Gantt Timeline</span>
           </div>
           <div style={{ display: 'flex', background: 'var(--bg-raised)', borderRadius: 10, border: '1px solid var(--border-soft)', padding: 3 }}>
             {(['WEEKLY', 'MONTHLY'] as const).map(h => (

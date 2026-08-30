@@ -13,7 +13,7 @@ export const AIChatWidget: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: 'Namaste! I am RailSync AI, your intelligent assistant for AABPS. Ask me about defects, blocks, AAI metrics, or report a defect in Hindi/English. How can I help you today?',
+      content: 'Namaste! I am RailSync AI, your intelligent assistant for RailSync. Ask me about defects, blocks, AAI metrics, or report a defect in Hindi/English. How can I help you today?',
       timestamp: new Date(),
     },
   ]);

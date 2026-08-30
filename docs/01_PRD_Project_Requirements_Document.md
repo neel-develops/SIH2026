@@ -23,7 +23,7 @@
 
 ## 1. Executive Summary
 
-The **AI-Powered Automatic Block Planning System** (AABPS) is a unified, data-driven solution designed for Indian Railways to automate and optimize maintenance block scheduling across three critical departments:
+The **AI-Powered Automatic Block Planning System** (RailSync) is a unified, data-driven solution designed for Indian Railways to automate and optimize maintenance block scheduling across three critical departments:
 
 - **Engineering (ENG)** — Track & Civil Infrastructure
 - **Traction Distribution (TD)** — Overhead Equipment & Power Supply

@@ -9,14 +9,14 @@ export interface QueuedSubmission {
   status: 'PENDING' | 'SYNCED' | 'FAILED';
 }
 
-export class AABPSDatabase extends Dexie {
+export class RailSyncDatabase extends Dexie {
   defects!: Table<Defect>;
   blockPlans!: Table<BlockPlan>;
   kpiSnapshot!: Table<KPISnapshot & { id: string }>;
   queuedSubmissions!: Table<QueuedSubmission>;
 
   constructor() {
-    super('AABPSDatabase');
+    super('RailSyncDatabase');
     this.version(1).stores({
       defects: 'id, department, criticality, status, sectionId, blockSection',
       blockPlans: 'id, horizon, sectionId, status',
@@ -26,4 +26,4 @@ export class AABPSDatabase extends Dexie {
   }
 }
 
-export const db = new AABPSDatabase();
+export const db = new RailSyncDatabase();

@@ -110,7 +110,7 @@ export const LoginView: React.FC = () => {
                   border: '1px solid rgba(252,211,77,0.35)',
                   display: 'flex', justifyContent: 'space-between', color: '#FCD34D', fontWeight: 700,
                 }}>
-                  <span>AABPS: 1 Combined</span>
+                  <span>RailSync: 1 Combined</span>
                   <span>3.5h (-37%)</span>
                 </div>
               </div>
