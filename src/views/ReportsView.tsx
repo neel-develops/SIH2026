@@ -170,7 +170,7 @@ export const ReportsView: React.FC = () => {
             <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
               AI-Generated DRM Executive Briefing
             </h3>
-            <span className="chip" style={{ fontSize: 9, background: 'var(--rail-snt)', color: '#fff', border: 'none' }}>Groq LLaMA 3.3 70B</span>
+            <span className="chip" style={{ fontSize: 9, background: 'var(--rail-snt)', color: '#fff', border: 'none' }}>Groq GPT-OSS 120B</span>
           </div>
           <button
             onClick={async () => {

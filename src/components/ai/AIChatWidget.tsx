@@ -133,7 +133,7 @@ export const AIChatWidget: React.FC = () => {
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>RailSync AI</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>
-              Groq LLaMA 3.3 70B · {mode === 'defect' ? 'Defect Reporting Mode' : 'Chat Mode'}
+              Groq GPT-OSS 120B · {mode === 'defect' ? 'Defect Reporting Mode' : 'Chat Mode'}
             </div>
           </div>
         </div>
