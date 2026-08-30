@@ -9,7 +9,7 @@
 
 ---
 
-[![SIH 2025](https://img.shields.io/badge/SIH-2025-orange?style=for-the-badge&logo=data:image/svg+xml;base64,)](https://sih.gov.in)
+[![SIH 2026](https://img.shields.io/badge/SIH-2025-orange?style=for-the-badge&logo=data:image/svg+xml;base64,)](https://sih.gov.in)
 [![MIT-WPU](https://img.shields.io/badge/MIT--WPU-Internal%20Round-blue?style=for-the-badge)](https://mitwpu.edu.in)
 [![Ministry of Railways](https://img.shields.io/badge/Ministry%20of-Railways-darkgreen?style=for-the-badge)](https://indianrailways.gov.in)
 [![PWA Ready](https://img.shields.io/badge/PWA-3G%2F4G%2F5G%20Ready-purple?style=for-the-badge)](https://web.dev/progressive-web-apps/)
