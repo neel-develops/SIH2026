@@ -48,3 +48,5 @@ logs/
 *.pem
 *.key
 *.cert
+
+.vercel
