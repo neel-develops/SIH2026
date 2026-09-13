@@ -48,14 +48,45 @@ def generate_plan(
     horizon_start = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     horizon_end = horizon_start + timedelta(days=req.horizon_days)
 
-    # Get open/in-progress defects
-    defects = (
-        db.query(Defect)
-        .filter(Defect.status.in_(["OPEN", "IN_PROGRESS"]))
-        .order_by(Defect.priority_score.desc())
-        .limit(200)
+    # Candidate pool = everything still outstanding.
+    #
+    # A defect only leaves the pool when the work is actually done, or when it is
+    # already locked into a plan that has been approved for execution. Treating a
+    # merely *generated* plan as a commitment drains the pool on every solve and
+    # leaves later plans empty.
+    committed_defect_ids = set()
+    committed_blocks = (
+        db.query(Block)
+        .join(BlockPlan, Block.plan_id == BlockPlan.id)
+        .filter(
+            (BlockPlan.status.in_(["APPROVED", "IN_EXECUTION", "COMPLETED"]))
+            | (Block.status.in_(["IN_PROGRESS", "PARTIALLY_DONE", "COMPLETED"]))
+        )
         .all()
     )
+    for blk in committed_blocks:
+        # Work already finished inside a block is done; the rest is still owed.
+        done = set(blk.completed_defect_ids or [])
+        for did in (blk.defect_ids or []):
+            if did in done or blk.status == "COMPLETED":
+                continue
+            committed_defect_ids.add(did)
+
+    query = db.query(Defect).filter(Defect.status != "COMPLETED")
+    if committed_defect_ids:
+        query = query.filter(~Defect.id.in_(committed_defect_ids))
+
+    defects = query.order_by(Defect.priority_score.desc()).limit(200).all()
+
+    if not defects:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "No outstanding defects available to schedule — every defect is either "
+                "completed or already committed to an approved plan. Use the demo reset "
+                "to re-open the corridor."
+            ),
+        )
 
     # Re-score defects
     for d in defects:
@@ -73,6 +104,16 @@ def generate_plan(
         )
         .all()
     )
+
+    if not windows:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"No traffic windows available between {horizon_start:%d %b %Y} and "
+                f"{horizon_end:%d %b %Y}. The seeded window calendar may have lapsed — "
+                "restart the backend to regenerate it."
+            ),
+        )
 
     # Run OR-Tools solver
     result = solve_block_plan(defects, windows, enable_combined=req.enable_combined_blocks)
@@ -120,14 +161,10 @@ def generate_plan(
         )
         plan.blocks.append(block)
 
-    # Mark defects as scheduled
-    scheduled_defect_ids = []
-    for b_data in result["blocks"]:
-        scheduled_defect_ids.extend(b_data["defect_ids"])
-    if scheduled_defect_ids:
-        db.query(Defect).filter(Defect.id.in_(scheduled_defect_ids)).update(
-            {"status": "SCHEDULED"}, synchronize_session=False
-        )
+    # Deliberately NOT flipping the defects to SCHEDULED here. A generated plan is
+    # a proposal, not a commitment — defects are only consumed once the plan is
+    # approved (see approve_plan), so a planner can generate and compare several
+    # candidate plans against the same defect pool.
 
     db.add(plan)
     db.add(AuditLog(
@@ -155,19 +192,32 @@ def approve_plan(
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
+    # Clients have historically sent both the verb ("APPROVE") and the past
+    # participle ("APPROVED"); normalise so neither silently no-ops.
+    action = (req.action or "").strip().upper()
+    if action in ("APPROVE", "APPROVED"):
+        action = "APPROVED"
+    elif action in ("REJECT", "REJECTED"):
+        action = "REJECTED"
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown approval action '{req.action}' — expected APPROVE or REJECT",
+        )
+
     approval = PlanApproval(
         id=str(uuid.uuid4()),
         plan_id=plan_id,
         user_id=user.id,
         user_name=user.name,
         role=user.role,
-        action=req.action,
+        action=action,
         comment=req.comment,
         created_at=datetime.utcnow(),
     )
     db.add(approval)
 
-    if req.action == "APPROVED":
+    if action == "APPROVED":
         if user.role in ("SENIOR_OFFICER", "SUPER_ADMIN"):
             plan.status = "APPROVED"
             plan.approved_by = user.name
@@ -185,17 +235,29 @@ def approve_plan(
                 plan.status = "PENDING_APPROVAL"
         else:
             plan.status = "PENDING_APPROVAL"
-    elif req.action == "REJECTED":
+    elif action == "REJECTED":
         plan.status = "REJECTED"
+
+    # Approval is the point of commitment: only now do the defects leave the
+    # planning pool, so competing draft plans can be compared before one wins.
+    if plan.status == "APPROVED":
+        committed = []
+        for blk in plan.blocks:
+            committed.extend(blk.defect_ids or [])
+        if committed:
+            db.query(Defect).filter(
+                Defect.id.in_(committed),
+                Defect.status != "COMPLETED",
+            ).update({"status": "SCHEDULED"}, synchronize_session=False)
 
     db.add(AuditLog(
         user_id=user.id, user_name=user.name,
-        action=f"PLAN_{req.action}", entity_type="BLOCK_PLAN", entity_id=plan_id,
+        action=f"PLAN_{action}", entity_type="BLOCK_PLAN", entity_id=plan_id,
         details={"comment": req.comment},
     ))
     db.commit()
 
-    return {"status": plan.status, "message": f"Plan {req.action.lower()} by {user.name}"}
+    return {"status": plan.status, "message": f"Plan {action.lower()} by {user.name}"}
 
 
 @router.post("/{plan_id}/blocks/{block_id}/override", response_model=BlockOut)

@@ -10,16 +10,25 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 from database import engine, SessionLocal, Base
-from seed import seed_all
-from routers import auth_router, defects_router, plans_router, reports_router, users_router, llm_router
+from migrations import run_migrations
+from seed import seed_all, refresh_block_windows
+from routers import (
+    auth_router, defects_router, plans_router, reports_router,
+    users_router, llm_router, execution_router,
+)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    run_migrations(engine, Base)
     db = SessionLocal()
     try:
         seed_all(db)
+        # The seeded traffic-window calendar is relative to seed time. Without a
+        # top-up the horizon lapses after a few days and every solve returns zero
+        # blocks — which looks exactly like a broken optimiser during a demo.
+        refresh_block_windows(db)
     finally:
         db.close()
     yield
@@ -47,6 +56,7 @@ app.include_router(plans_router.router)
 app.include_router(reports_router.router)
 app.include_router(users_router.router)
 app.include_router(llm_router.router)
+app.include_router(execution_router.router)
 
 
 @app.get("/api/v1/health")

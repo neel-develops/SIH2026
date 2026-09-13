@@ -6,6 +6,8 @@ Pipeline:
   2. Window Scoring (traffic-aware gap analysis)
   3. OR-Tools CP-SAT Constraint Solver (optimal task-to-window assignment)
   4. DBSCAN Combined Block Detection (multi-department clustering)
+  5. Carry-Forward Rescheduler (re-optimises work left unfinished by a
+     partially-completed block into the next-best traffic window)
 """
 
 import time
@@ -268,7 +270,133 @@ def find_combination_opportunities(blocks: list[dict]) -> list[dict]:
     return opportunities
 
 
-# ── 5. AAI Calculation ───────────────────────────────────────────────────────
+# ── 5. Carry-Forward Rescheduler ────────────────────────────────────────────
+# When a block is marked PARTIALLY_DONE, the defects that were not finished must
+# not silently fall off the plan — today that is exactly how Indian Railways
+# maintenance backlog accumulates. This re-runs the window-scoring model over the
+# remaining traffic windows and picks the best slot for the unfinished work.
+
+# Urgency multiplier applied to work that has already consumed a block once.
+# A second failed attempt is materially worse than a first, so the escalation is
+# super-linear in the carry-forward generation.
+CARRY_FORWARD_ESCALATION = {0: 1.15, 1: 1.35, 2: 1.60}
+MAX_CARRY_FORWARD_GENERATION = 3
+
+
+def score_carry_forward_window(
+    window: BlockWindow,
+    required_hrs: float,
+    earliest_start: datetime,
+    generation: int = 0,
+) -> float:
+    """Rank a candidate window for carrying unfinished work forward.
+
+    Balances four competing objectives:
+      * urgency      — sooner is better, work has already slipped once
+      * capacity     — the window must actually fit the remaining hours
+      * traffic      — fewer conflicting trains is better
+      * headroom     — prefer a window with slack, so it does not slip again
+    """
+    if window.window_start < earliest_start:
+        return -1.0
+
+    window_hrs = (window.window_end - window.window_start).total_seconds() / 3600
+    if window_hrs < required_hrs:
+        return -1.0  # infeasible, cannot fit the outstanding work
+
+    # Urgency: decays over a 7-day lookahead. Escalates with each carry-forward.
+    hours_away = (window.window_start - earliest_start).total_seconds() / 3600
+    urgency = max(0.0, 1.0 - (hours_away / 168.0))
+    urgency *= CARRY_FORWARD_ESCALATION.get(generation, 1.60)
+
+    # Traffic: each conflicting train costs 15% of the traffic score.
+    traffic = max(0.0, 1.0 - window.train_count * 0.15)
+
+    # Headroom: 1.5x the required time is ideal; beyond that adds no value.
+    headroom = min(1.0, (window_hrs - required_hrs) / max(required_hrs * 0.5, 0.5))
+
+    score = urgency * 0.45 + traffic * 0.30 + headroom * 0.25
+    return round(score, 4)
+
+
+def reschedule_carry_forward(
+    pending_defects: list[Defect],
+    windows: list[BlockWindow],
+    section: str,
+    earliest_start: datetime,
+    generation: int = 0,
+) -> dict | None:
+    """Pick the optimal next window for work left unfinished by a partial block.
+
+    Returns a block spec dict ready for persistence, or None when no feasible
+    window exists inside the horizon (the caller then surfaces an escalation).
+    """
+    if not pending_defects:
+        return None
+
+    if generation >= MAX_CARRY_FORWARD_GENERATION:
+        return None  # escalate to a human planner rather than looping forever
+
+    required_hrs = sum(d.estimated_duration_hrs for d in pending_defects)
+
+    candidates = []
+    for w in windows:
+        if w.section != section or w.status != "AVAILABLE":
+            continue
+        score = score_carry_forward_window(w, required_hrs, earliest_start, generation)
+        if score >= 0:
+            candidates.append((score, w))
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda pair: pair[0], reverse=True)
+    best_score, best_window = candidates[0]
+
+    departments = sorted(set(d.department for d in pending_defects))
+    is_combined = len(departments) > 1
+    window_hrs = (best_window.window_end - best_window.window_start).total_seconds() / 3600
+
+    # Allow a 25% contingency on the remaining estimate, capped by the window.
+    duration_hrs = round(min(required_hrs * 1.25, window_hrs), 1)
+
+    # Confidence is the window score tempered by how many times this has slipped.
+    confidence = round(min(0.97, 0.62 + best_score * 0.35), 3)
+
+    defect_types = ", ".join(sorted(set(d.defect_type for d in pending_defects)))
+    hours_away = (best_window.window_start - earliest_start).total_seconds() / 3600
+
+    rationale = (
+        f"AI CARRY-FORWARD (generation {generation + 1}): {len(pending_defects)} unfinished "
+        f"task(s) [{defect_types}] re-optimised into the next-best window on {section}, "
+        f"{hours_away:.0f}h from the partial handback. "
+        f"Window fit {required_hrs:.1f}h work into {window_hrs:.1f}h available "
+        f"({best_window.train_count} conflicting trains). "
+        f"Window score {best_score:.2f}, confidence {confidence:.0%}."
+    )
+    if is_combined:
+        rationale += f" Retained as a combined {'+'.join(departments)} block to avoid a second disconnection."
+
+    return {
+        "id": f"BLK-CF-{uuid.uuid4().hex[:6].upper()}",
+        "section": section,
+        "department": "COMBINED" if is_combined else departments[0],
+        "block_type": "CARRY_FORWARD",
+        "defect_ids": [d.id for d in pending_defects],
+        "scheduled_start": best_window.window_start,
+        "scheduled_end": best_window.window_start + timedelta(hours=duration_hrs),
+        "duration_hrs": duration_hrs,
+        "is_combined": is_combined,
+        "combined_departments": departments if is_combined else None,
+        "ai_confidence": confidence,
+        "ai_rationale": rationale,
+        "window_id": best_window.id,
+        "window_score": best_score,
+        "alternatives_considered": len(candidates),
+    }
+
+
+# ── 6. AAI Calculation ───────────────────────────────────────────────────────
 
 def calculate_aai(blocks: list[dict], total_hours: float = 168.0) -> dict:
     section_downtime = defaultdict(float)

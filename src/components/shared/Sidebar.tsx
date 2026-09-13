@@ -3,7 +3,8 @@ import { useStore } from '../../lib/store/useStore';
 import { useTranslation } from '../../lib/i18n/translations';
 import {
   Train, LayoutDashboard, Calendar, HelpCircle, LogOut, Map,
-  FileBarChart2, Smartphone, Users, AlertTriangle, Layers, X, Phone, Mail, FileText, Lock
+  FileBarChart2, Smartphone, Users, AlertTriangle, Layers, X, Phone, Mail, FileText, Lock,
+  Activity
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -17,6 +18,7 @@ export const Sidebar: React.FC = () => {
   const allNavItems = [
     { route: '/dashboard',         label: t.dashboard,        icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'ZONAL_ADMIN', 'DIVISIONAL_BLOCK_PLANNER', 'SENIOR_OFFICER', 'READ_ONLY_VIEWER'] },
     { route: '/block-plans',       label: t.blockPlans,       icon: Calendar,        roles: ['SUPER_ADMIN', 'ZONAL_ADMIN', 'DIVISIONAL_BLOCK_PLANNER', 'SENIOR_OFFICER', 'READ_ONLY_VIEWER'] },
+    { route: '/execution',         label: t.executionRoom,    icon: Activity,        roles: ['SUPER_ADMIN', 'ZONAL_ADMIN', 'DIVISIONAL_BLOCK_PLANNER', 'SENIOR_OFFICER', 'SSE_ENGINEERING', 'SSE_SIGNAL_TELECOM', 'SSE_TRACTION_DISTRIBUTION', 'JUNIOR_ENGINEER', 'READ_ONLY_VIEWER'] },
     { route: '/defects',           label: t.defectsQueue,     icon: AlertTriangle,   roles: ['SUPER_ADMIN', 'ZONAL_ADMIN', 'DIVISIONAL_BLOCK_PLANNER', 'SSE_ENGINEERING', 'SSE_SIGNAL_TELECOM', 'SSE_TRACTION_DISTRIBUTION', 'JUNIOR_ENGINEER', 'READ_ONLY_VIEWER'] },
     { route: '/map',               label: t.gisMap,           icon: Map,             roles: ['SUPER_ADMIN', 'ZONAL_ADMIN', 'DIVISIONAL_BLOCK_PLANNER', 'SENIOR_OFFICER', 'SSE_ENGINEERING', 'SSE_SIGNAL_TELECOM', 'SSE_TRACTION_DISTRIBUTION', 'JUNIOR_ENGINEER', 'READ_ONLY_VIEWER'] },
     { route: '/reports',           label: t.analytics,        icon: FileBarChart2,   roles: ['SUPER_ADMIN', 'ZONAL_ADMIN', 'DIVISIONAL_BLOCK_PLANNER', 'SENIOR_OFFICER', 'READ_ONLY_VIEWER'] },

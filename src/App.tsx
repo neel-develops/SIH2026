@@ -13,6 +13,7 @@ import { NewDefectView } from './views/NewDefectView';
 import { MapView } from './views/MapView';
 import { ReportsView } from './views/ReportsView';
 import { FieldPWAView } from './views/FieldPWAView';
+import { ExecutionView } from './views/ExecutionView';
 import { AdminUsersView } from './views/AdminUsersView';
 import { AIChatWidget } from './components/ai/AIChatWidget';
 
@@ -45,6 +46,7 @@ export const App: React.FC = () => {
       case '/block-plans':          return <BlockPlansView />;
       case '/block-plans/generate': return <GeneratePlanView />;
       case '/block-plans/detail':   return <PlanDetailView />;
+      case '/execution':            return <ExecutionView />;
       case '/defects':              return <DefectsView />;
       case '/defects/detail':       return <DefectDetailView />;
       case '/defects/new':          return <NewDefectView />;

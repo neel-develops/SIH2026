@@ -1,5 +1,9 @@
 import { create } from 'zustand';
-import { api, setToken, getToken, ApiUser, ApiDefect, ApiPlan, ApiKPI, ApiBlock } from '../api';
+import {
+  api, setToken, getToken,
+  ApiUser, ApiDefect, ApiPlan, ApiKPI, ApiBlock,
+  ApiLiveExecution, PartialCompleteResponse,
+} from '../api';
 
 export type NetworkTier = 'ONLINE' | '3G' | 'OFFLINE';
 
@@ -14,6 +18,8 @@ interface State {
   defects: ApiDefect[];
   plans: ApiPlan[];
   kpi: ApiKPI | null;
+  live: ApiLiveExecution | null;
+  liveLoading: boolean;
 
   filterDept: string;
   filterCriticality: string;
@@ -43,11 +49,19 @@ interface State {
   fetchDefects: (params?: Record<string, string>) => Promise<void>;
   fetchPlans: () => Promise<void>;
   fetchKPI: () => Promise<void>;
+  fetchLive: () => Promise<void>;
   fetchAll: () => Promise<void>;
+
+  // Block execution lifecycle
+  startBlock: (blockId: string, teamLeader?: string) => Promise<ApiBlock>;
+  reportProgress: (blockId: string, completedDefectIds: string[]) => Promise<ApiBlock>;
+  partialComplete: (blockId: string, completedDefectIds: string[], reason: string) => Promise<PartialCompleteResponse>;
+  completeBlock: (blockId: string, remarks?: string) => Promise<ApiBlock>;
+  resetDemo: () => Promise<void>;
 
   createDefect: (data: Record<string, unknown>) => Promise<ApiDefect>;
   generatePlan: (data: Record<string, unknown>) => Promise<ApiPlan>;
-  approvePlan: (planId: string, action: string, comment?: string) => Promise<void>;
+  approvePlan: (planId: string, action: string, comment?: string) => Promise<{ status: string; message: string }>;
   overrideBlock: (planId: string, blockId: string, reason: string) => Promise<void>;
   updateBlockStatus: (planId: string, blockId: string, status: string, actualStart?: string, actualEnd?: string) => Promise<void>;
 }
@@ -72,6 +86,8 @@ export const useStore = create<State>((set, get) => ({
   defects: [],
   plans: [],
   kpi: null,
+  live: null,
+  liveLoading: false,
 
   filterDept: 'ALL',
   filterCriticality: 'ALL',
@@ -126,6 +142,7 @@ export const useStore = create<State>((set, get) => ({
       defects: [],
       plans: [],
       kpi: null,
+      live: null,
     });
   },
 
@@ -183,9 +200,20 @@ export const useStore = create<State>((set, get) => ({
     }
   },
 
+  fetchLive: async () => {
+    set({ liveLoading: true });
+    try {
+      const live = await api.execution.live();
+      set({ live, liveLoading: false });
+    } catch (e) {
+      console.error('Failed to fetch live execution:', e);
+      set({ liveLoading: false });
+    }
+  },
+
   fetchAll: async () => {
-    const { fetchDefects, fetchPlans, fetchKPI } = get();
-    await Promise.all([fetchDefects({ limit: '300' }), fetchPlans(), fetchKPI()]);
+    const { fetchDefects, fetchPlans, fetchKPI, fetchLive } = get();
+    await Promise.all([fetchDefects({ limit: '300' }), fetchPlans(), fetchKPI(), fetchLive()]);
   },
 
   createDefect: async (data) => {
@@ -211,9 +239,13 @@ export const useStore = create<State>((set, get) => ({
     }
   },
 
+  // Returns the plan's resulting status. The backend runs a two-tier chain —
+  // a Divisional Planner's first approval does NOT finalise a plan — so callers
+  // must report what actually happened rather than assuming success.
   approvePlan: async (planId, action, comment) => {
-    await api.plans.approve(planId, action, comment);
+    const res = await api.plans.approve(planId, action, comment);
     await get().fetchPlans();
+    return res;
   },
 
   overrideBlock: async (planId, blockId, reason) => {
@@ -224,5 +256,41 @@ export const useStore = create<State>((set, get) => ({
   updateBlockStatus: async (planId, blockId, status, actualStart, actualEnd) => {
     await api.plans.updateBlockStatus(planId, blockId, status, actualStart, actualEnd);
     await get().fetchPlans();
+  },
+
+  // ── Block execution lifecycle ─────────────────────────────────────────────
+  // Each transition refreshes the live feed and plans so the Gantt, the control
+  // room and the defect queue all stay in step with one another.
+
+  startBlock: async (blockId, teamLeader) => {
+    const block = await api.execution.start(blockId, teamLeader);
+    await Promise.all([get().fetchLive(), get().fetchPlans()]);
+    return block;
+  },
+
+  reportProgress: async (blockId, completedDefectIds) => {
+    const block = await api.execution.progress(blockId, completedDefectIds);
+    await get().fetchLive();
+    return block;
+  },
+
+  partialComplete: async (blockId, completedDefectIds, reason) => {
+    const res = await api.execution.partial(blockId, completedDefectIds, reason);
+    await Promise.all([get().fetchLive(), get().fetchPlans(), get().fetchDefects({ limit: '300' })]);
+    return res;
+  },
+
+  completeBlock: async (blockId, remarks) => {
+    const block = await api.execution.complete(blockId, remarks);
+    await Promise.all([
+      get().fetchLive(), get().fetchPlans(),
+      get().fetchDefects({ limit: '300' }), get().fetchKPI(),
+    ]);
+    return block;
+  },
+
+  resetDemo: async () => {
+    await api.execution.resetDemo();
+    await get().fetchAll();
   },
 }));

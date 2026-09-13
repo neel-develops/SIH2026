@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { STATIONS, BLOCK_SECTIONS } from '../../lib/mocks/seedData';
-import { Defect } from '../../types';
+import type { ApiDefect } from '../../lib/api';
 import { Map, Play, Pause } from 'lucide-react';
 import { useStore } from '../../lib/store/useStore';
 
 interface RailwayMapProps {
-  defects: Defect[];
+  defects: ApiDefect[];
 }
 
 export const RailwayMap: React.FC<RailwayMapProps> = ({ defects }) => {
@@ -25,7 +25,7 @@ export const RailwayMap: React.FC<RailwayMapProps> = ({ defects }) => {
   }, [isPlayingScrubber]);
 
   const getSectionHealthColor = (secName: string) => {
-    const secDefects = defects.filter((d) => d.blockSection === secName);
+    const secDefects = defects.filter((d) => d.section === secName);
     const hasCritical = secDefects.some((d) => d.criticality === 'CRITICAL');
     const hasHigh = secDefects.some((d) => d.criticality === 'HIGH');
     if (hasCritical) return 'var(--rail-critical)';
@@ -150,15 +150,15 @@ export const RailwayMap: React.FC<RailwayMapProps> = ({ defects }) => {
                 <span className="font-mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>OPEN DEFECTS IN SECTION:</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
                   {defects
-                    .filter((d) => d.blockSection === selectedSection)
+                    .filter((d) => d.section === selectedSection)
                     .slice(0, 4)
                     .map((def) => (
                       <div key={def.id} className="font-mono" style={{ background: 'var(--bg-surface)', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-soft)', fontSize: 11 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                           <span style={{ fontWeight: 700, color: 'var(--amber-700)' }}>{def.id} ({def.department})</span>
-                          <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>P: {def.priorityScore}</span>
+                          <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>P: {def.priority_score}</span>
                         </div>
-                        <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0 }}>{def.assetType} at KM {def.kmPost}</p>
+                        <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0 }}>{def.asset_type ?? def.defect_type} at KM {def.km_from}</p>
                       </div>
                     ))}
                 </div>

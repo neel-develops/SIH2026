@@ -168,6 +168,43 @@ export const api = {
       }),
   },
 
+  // ── Block Execution Lifecycle ───────────────────────────────────────────
+  // SCHEDULED → IN_PROGRESS → PARTIALLY_DONE → COMPLETED
+
+  execution: {
+    start: (blockId: string, teamLeader?: string) =>
+      request<ApiBlock>(`/api/v1/execution/blocks/${blockId}/start`, {
+        method: 'POST',
+        body: JSON.stringify({ team_leader: teamLeader }),
+      }),
+
+    progress: (blockId: string, completedDefectIds: string[], note?: string) =>
+      request<ApiBlock>(`/api/v1/execution/blocks/${blockId}/progress`, {
+        method: 'POST',
+        body: JSON.stringify({ completed_defect_ids: completedDefectIds, note }),
+      }),
+
+    partial: (blockId: string, completedDefectIds: string[], reason: string) =>
+      request<PartialCompleteResponse>(`/api/v1/execution/blocks/${blockId}/partial`, {
+        method: 'POST',
+        body: JSON.stringify({ completed_defect_ids: completedDefectIds, reason }),
+      }),
+
+    complete: (blockId: string, remarks?: string) =>
+      request<ApiBlock>(`/api/v1/execution/blocks/${blockId}/complete`, {
+        method: 'POST',
+        body: JSON.stringify({ remarks }),
+      }),
+
+    live: () => request<ApiLiveExecution>('/api/v1/execution/live'),
+
+    resetDemo: () =>
+      request<{ status: string; defects_reopened: number; message: string }>(
+        '/api/v1/execution/demo/reset',
+        { method: 'POST' },
+      ),
+  },
+
   // ── AI / LLM ─────────────────────────────────────────────────────────────
 
   ai: {
@@ -250,6 +287,17 @@ export interface CreateDefectRequest {
   estimated_duration_hrs?: number;
 }
 
+export type BlockStatus =
+  | 'SCHEDULED' | 'IN_PROGRESS' | 'PARTIALLY_DONE' | 'COMPLETED' | 'OVERRIDDEN';
+
+export interface ExecutionLogEntry {
+  event: string;
+  actor: string;
+  detail: string;
+  at: string;
+  [key: string]: unknown;
+}
+
 export interface ApiBlock {
   id: string;
   plan_id: string;
@@ -266,9 +314,101 @@ export interface ApiBlock {
   combined_departments: string[] | null;
   ai_confidence: number;
   ai_rationale: string | null;
-  status: string;
+  status: BlockStatus | string;
   override_reason: string | null;
   overridden_by: string | null;
+  team_leader: string | null;
+
+  /** Status of the parent plan — work may only begin once it is approved. */
+  plan_status: string | null;
+  is_startable: boolean;
+
+  // Execution tracking
+  progress_pct: number;
+  completed_defect_ids: string[];
+  pending_defect_ids: string[];
+  partial_reason: string | null;
+  execution_log: ExecutionLogEntry[];
+  actual_duration_hrs: number | null;
+  overrun_min: number;
+  started_by: string | null;
+  completed_by: string | null;
+
+  // AI carry-forward chain
+  carried_forward_from: string | null;
+  carried_forward_to: string | null;
+  carry_forward_generation: number;
+}
+
+export interface PartialCompleteResponse {
+  block: ApiBlock;
+  carry_forward: ApiBlock | null;
+  escalation: {
+    reason: string;
+    pending_defect_ids: string[];
+    message: string;
+  } | null;
+}
+
+export interface AtRiskBlock {
+  block_id: string;
+  section: string;
+  severity: 'OVERRUN' | 'HIGH' | 'MEDIUM';
+  elapsed_hrs: number;
+  planned_hrs: number;
+  progress_pct: number;
+  overrun_min: number;
+  message: string;
+}
+
+export interface CarryForwardChain {
+  block_id: string;
+  parent_block_id: string;
+  section: string;
+  generation: number;
+  defect_count: number;
+  scheduled_start: string;
+  status: string;
+  ai_rationale: string | null;
+}
+
+/** A defect as it appears on a block's execution checklist. */
+export interface BlockTask {
+  id: string;
+  defect_type: string;
+  asset_type: string | null;
+  section: string;
+  km_from: number;
+  department: string;
+  criticality: string;
+  priority_score: number;
+  estimated_duration_hrs: number;
+  requires_tsr: boolean;
+  status: string;
+}
+
+export interface ApiLiveExecution {
+  server_time: string;
+  active_blocks: ApiBlock[];
+  partial_blocks: ApiBlock[];
+  upcoming_blocks: ApiBlock[];
+  recent_completions: ApiBlock[];
+  at_risk: AtRiskBlock[];
+  carry_forward_chains: CarryForwardChain[];
+  /** Task details for every defect referenced above, keyed by defect id. */
+  tasks: Record<string, BlockTask>;
+  stats: {
+    active_count: number;
+    partial_count: number;
+    upcoming_count: number;
+    completed_count: number;
+    at_risk_count: number;
+    carry_forward_count: number;
+    carry_forward_defects: number;
+    on_time_rate: number;
+    avg_actual_hrs: number;
+    total_overrun_min: number;
+  };
 }
 
 export interface ApiApproval {

@@ -4,10 +4,10 @@ import { SEEDED_USERS } from '../../lib/mocks/seedData';
 import { Train, Wifi, WifiOff, SignalLow, UserCheck, ShieldAlert, ChevronRight, Globe, Layers } from 'lucide-react';
 
 export const Header: React.FC = () => {
-  const { 
-    currentUser, 
-    setCurrentUser, 
-    networkTier, 
+  const {
+    currentUser,
+    demoLogin,
+    networkTier,
     setNetworkTier, 
     currentRoute, 
     setCurrentRoute,
@@ -74,15 +74,12 @@ export const Header: React.FC = () => {
           <div className="flex items-center space-x-2 bg-[#0B1220] px-2 py-0.5 rounded border border-[#253449]">
             <UserCheck className="w-3.5 h-3.5 text-blue-400" />
             <select
-              value={currentUser.id}
-              onChange={(e) => {
-                const u = SEEDED_USERS.find((usr) => usr.id === e.target.value);
-                if (u) setCurrentUser(u);
-              }}
+              value={currentUser.role}
+              onChange={(e) => { void demoLogin(e.target.value); }}
               className="bg-transparent text-slate-200 font-mono text-[11px] outline-none cursor-pointer"
             >
               {SEEDED_USERS.map((usr) => (
-                <option key={usr.id} value={usr.id} className="bg-[#16202E] text-slate-200">
+                <option key={usr.id} value={usr.role} className="bg-[#16202E] text-slate-200">
                   {usr.name} ({usr.role.replace('_', ' ')})
                 </option>
               ))}

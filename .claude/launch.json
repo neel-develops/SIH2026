@@ -6,6 +6,13 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "remotion",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["remotion", "studio", "--port", "3100", "--cwd", "demo-video"],
+      "port": 3100,
+      "url": "http://localhost:3100"
     }
   ]
 }

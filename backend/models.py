@@ -116,13 +116,44 @@ class Block(Base):
     combined_departments = Column(JSON, nullable=True)
     ai_confidence = Column(Float, default=0.85)
     ai_rationale = Column(Text, nullable=True)
+    # Lifecycle: SCHEDULED → IN_PROGRESS → PARTIALLY_DONE → COMPLETED
     status = Column(String, default="SCHEDULED")
     override_reason = Column(Text, nullable=True)
     overridden_by = Column(String, nullable=True)
     team_leader = Column(String, nullable=True)
     resources_required = Column(JSON, nullable=True)
 
+    # ── Execution tracking ──────────────────────────────────────────────
+    progress_pct = Column(Float, default=0.0)
+    completed_defect_ids = Column(JSON, default=list)
+    pending_defect_ids = Column(JSON, default=list)
+    partial_reason = Column(Text, nullable=True)
+    execution_log = Column(JSON, default=list)
+    actual_duration_hrs = Column(Float, nullable=True)
+    overrun_min = Column(Float, default=0.0)
+    started_by = Column(String, nullable=True)
+    completed_by = Column(String, nullable=True)
+
+    # ── AI carry-forward chain ──────────────────────────────────────────
+    carried_forward_from = Column(String, nullable=True)   # parent block id
+    carried_forward_to = Column(String, nullable=True)     # child block id
+    carry_forward_generation = Column(Integer, default=0)  # 0 = original
+
     plan = relationship("BlockPlan", back_populates="blocks")
+
+    # A block cannot be executed until its parent plan is approved. Exposing the
+    # plan's status on the block lets the field UI disable "Start" up front,
+    # rather than letting a crew click it and hit a 409.
+    @property
+    def plan_status(self) -> str | None:
+        return self.plan.status if self.plan else None
+
+    @property
+    def is_startable(self) -> bool:
+        return (
+            self.status in ("SCHEDULED", "OVERRIDDEN")
+            and self.plan_status in ("APPROVED", "IN_EXECUTION")
+        )
 
 
 class PlanApproval(Base):

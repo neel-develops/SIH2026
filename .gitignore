@@ -9,6 +9,10 @@ node_modules/
 out/
 dist/
 build/
+*.tsbuildinfo
+
+# Vercel
+.vercel/
 
 # Python
 __pycache__/
